@@ -10,20 +10,16 @@ export default function RootLayout() {
           let iconName;
 
           if (route.name === "dashboard") {
-            iconName = focused ? "home" : "home-outline"; // Corrected
+            iconName = focused ? "home" : "home-outline";
           } else if (route.name === "transacoes") {
-            iconName = focused ? "list" : "list-outline"; // Corrected
+            iconName = focused ? "list" : "list-outline";
           } else if (route.name === "debitos") {
-            iconName = focused ? "card" : "card-outline"; // Corrected
+            iconName = focused ? "card" : "card-outline";
           } else if (route.name === "metas") {
-            iconName = focused ? "ribbon" : "ribbon-outline"; // Corrected
+            iconName = focused ? "ribbon" : "ribbon-outline";
           } else if (route.name === "orcamentos") {
-            iconName = focused ? "calculator" : "calculator-outline"; // Corrected
+            iconName = focused ? "calculator" : "calculator-outline";
           }
-
-          // You can return any component that you like here!
-          // The 'as any' cast might not be necessary if TypeScript can infer the type correctly with valid names.
-          // However, keeping it for safety in case of subtle type mismatches with the library.
           return <Ionicons name={iconName as any} size={size} color={color} />;
         },
       })}
@@ -77,6 +73,13 @@ export default function RootLayout() {
         options={{
           title: "Configurações",
           href: null,
+        }}
+      />
+      {/* Add this entry to hide the index route from tabs */}
+      <Tabs.Screen
+        name="index" // This corresponds to app/index.tsx
+        options={{
+          href: null, // Hides it from the tab bar
         }}
       />
     </Tabs>
