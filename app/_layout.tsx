@@ -1,6 +1,6 @@
-import { Tabs, Link } from "expo-router"; // Added Link
+import { Tabs, Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable } from "react-native"; // Added Pressable
+import { Pressable } from "react-native";
 
 export default function RootLayout() {
   return (
@@ -10,17 +10,20 @@ export default function RootLayout() {
           let iconName;
 
           if (route.name === "dashboard") {
-            iconName = focused ? "ios-home" : "ios-home-outline";
+            iconName = focused ? "home" : "home-outline"; // Corrected
           } else if (route.name === "transacoes") {
-            iconName = focused ? "ios-list" : "ios-list-outline";
+            iconName = focused ? "list" : "list-outline"; // Corrected
           } else if (route.name === "debitos") {
-            iconName = focused ? "ios-card" : "ios-card-outline";
+            iconName = focused ? "card" : "card-outline"; // Corrected
           } else if (route.name === "metas") {
-            iconName = focused ? "ios-ribbon" : "ios-ribbon-outline";
+            iconName = focused ? "ribbon" : "ribbon-outline"; // Corrected
           } else if (route.name === "orcamentos") {
-            iconName = focused ? "ios-calculator" : "ios-calculator-outline";
+            iconName = focused ? "calculator" : "calculator-outline"; // Corrected
           }
 
+          // You can return any component that you like here!
+          // The 'as any' cast might not be necessary if TypeScript can infer the type correctly with valid names.
+          // However, keeping it for safety in case of subtle type mismatches with the library.
           return <Ionicons name={iconName as any} size={size} color={color} />;
         },
       })}
@@ -36,7 +39,7 @@ export default function RootLayout() {
                   <Ionicons
                     name="person-circle-outline"
                     size={25}
-                    color="gray" // You can customize color
+                    color="gray"
                     style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
@@ -69,18 +72,11 @@ export default function RootLayout() {
           title: "Orçamentos",
         }}
       />
-      {/* Defines the settings screen as a modal when navigated to from a tab.
-          This is one way to handle it; alternatively, it can be a regular screen
-          pushed onto the stack if not defined here.
-          For simplicity and to ensure it's part of the known routes for the layout,
-          defining it here. It won't appear as a tab.
-      */}
       <Tabs.Screen
-        name="settings" // Corresponds to app/settings.tsx
+        name="settings"
         options={{
           title: "Configurações",
-          href: null, // Hides it from the tab bar
-          // presentation: 'modal', // Optional: if you want it as a modal
+          href: null,
         }}
       />
     </Tabs>
