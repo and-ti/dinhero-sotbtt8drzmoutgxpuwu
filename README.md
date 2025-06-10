@@ -48,3 +48,113 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Database Usage
+
+This project uses `expo-sqlite` for local database storage. The core database logic is located in `src/database/index.ts`.
+
+### Importing Database Functions
+
+To use the database functionalities, import the necessary functions from the module:
+
+```typescript
+import {
+  getDBConnection,
+  initDatabase,
+  addItem,
+  getAllItems,
+  updateItem,
+  deleteItem
+} from '../src/database'; // Adjust the path based on your file's location
+```
+
+### Getting a Database Connection
+
+First, you need to get a database connection object.
+
+```typescript
+const db = getDBConnection();
+```
+
+### Initializing the Database
+
+Before performing any operations, ensure the database and necessary tables are initialized. The `initDatabase` function handles the creation of an 'items' table if it doesn't exist.
+
+```typescript
+initDatabase(db)
+  .then(() => {
+    console.log('Database initialized');
+    // You can now use CRUD operations
+  })
+  .catch(error => {
+    console.error('Database initialization failed:', error);
+  });
+```
+
+### CRUD Operations
+
+The module provides functions for Create, Read, Update, and Delete operations on the 'items' table. All CRUD functions return a Promise.
+
+**1. Add an Item**
+
+Adds a new item to the 'items' table. Resolves with the ID of the newly inserted item.
+
+```typescript
+addItem(db, 'My New Item')
+  .then(insertId => {
+    console.log('Item added with ID:', insertId);
+  })
+  .catch(error => {
+    console.error('Failed to add item:', error);
+  });
+```
+
+**2. Get All Items**
+
+Retrieves all items from the 'items' table. Resolves with an array of item objects (e.g., `{ id: number, name: string }[]`).
+
+```typescript
+getAllItems(db)
+  .then(items => {
+    console.log('Fetched items:', items);
+  })
+  .catch(error => {
+    console.error('Failed to fetch items:', error);
+  });
+```
+
+**3. Update an Item**
+
+Updates the name of an existing item by its ID. Resolves with the number of updated rows (should be 1 if successful).
+
+```typescript
+updateItem(db, 1, 'Updated Item Name') // Assuming item with ID 1 exists
+  .then(rowsAffected => {
+    if (rowsAffected > 0) {
+      console.log('Item updated successfully');
+    } else {
+      console.log('Item not found or not updated');
+    }
+  })
+  .catch(error => {
+    console.error('Failed to update item:', error);
+  });
+```
+
+**4. Delete an Item**
+
+Removes an item from the 'items' table by its ID. Resolves with the number of deleted rows (should be 1 if successful).
+
+```typescript
+deleteItem(db, 1) // Assuming item with ID 1 exists
+  .then(rowsAffected => {
+    if (rowsAffected > 0) {
+      console.log('Item deleted successfully');
+    } else {
+      console.log('Item not found or not deleted');
+    }
+  })
+  .catch(error => {
+    console.error('Failed to delete item:', error);
+  });
+```
