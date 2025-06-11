@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  Alert, // Keep Alert if used
+} from 'react-native';
+import { useRouter, Link } from 'expo-router';
 import { getDBConnection, addUser, findFamilyByName, addFamily, initDatabase } from '../src/database';
 import { type SQLiteDatabase } from 'expo-sqlite';
 
@@ -12,7 +22,19 @@ export default function SignUpScreen() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [familyName, setFamilyName] = useState(''); // New state for Family Name
   const [message, setMessage] = useState('');
+
+  const handleFullNameChange = (text: string) => {
+    setName(text); // Set the full name
+    const parts = text.trim().split(' ');
+    if (parts.length > 1) {
+      const lastName = parts[parts.length - 1];
+      setFamilyName(lastName); // Auto-fill family name from last word of full name
+    } else {
+      setFamilyName(''); // Clear family name if full name has no spaces or is a single word
+    }
+  };
 
   useEffect(() => {
     const initializeDB = async () => {
@@ -34,25 +56,20 @@ export default function SignUpScreen() {
       return;
     }
 
-    let familyName = '';
-    let currentUserName = name.trim(); // Default to full name
-    const nameParts = name.trim().split(' ');
-
-    if (nameParts.length > 1) {
-      familyName = nameParts.pop() as string; // Last part is family name
-      currentUserName = nameParts.join(' '); // Remainder is given name
-    }
+    // Use name state directly for full name, and familyName state for family name
+    const userFullName = name.trim();
+    const currentFamilyName = familyName.trim(); // Use the dedicated familyName state
 
     let familyId: number | null = null;
 
     try {
-      if (familyName) {
-        let existingFamily = await findFamilyByName(db, familyName);
+      if (currentFamilyName) { // Check if familyName state is not empty
+        let existingFamily = await findFamilyByName(db, currentFamilyName);
         if (existingFamily) {
           familyId = existingFamily.id;
         } else {
           try {
-            const newFamilyId = await addFamily(db, familyName);
+            const newFamilyId = await addFamily(db, currentFamilyName);
             familyId = newFamilyId;
           } catch (e: any) {
             console.error('Error creating family:', e);
@@ -63,8 +80,10 @@ export default function SignUpScreen() {
       }
 
       // NOTE: Storing plain text password. Hashing should be implemented.
+      // The 'name' parameter for addUser should be the user's individual name,
+      // which is 'userFullName' from the 'name' state.
       const passwordHash = password;
-      await addUser(db, currentUserName, phone.trim() || null, email.trim(), passwordHash, familyId);
+      await addUser(db, userFullName, phone.trim() || null, email.trim(), passwordHash, familyId);
       setMessage('Account created successfully! Redirecting to login...'); // Success message
       setTimeout(() => {
         router.replace('/login');
@@ -83,14 +102,28 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoidingContainer}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Create Account</Text>
 
-      <TextInput
+        <TextInput
         style={styles.input}
         placeholder="Full Name (e.g., John Doe)"
         value={name}
-        onChangeText={setName}
+        onChangeText={handleFullNameChange} // Use the new handler
+        autoCapitalize="words"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Family Name (Optional, auto-filled)"
+        value={familyName}
+        onChangeText={setFamilyName} // Allow direct editing
         autoCapitalize="words"
       />
       <TextInput
@@ -128,26 +161,36 @@ export default function SignUpScreen() {
       <Pressable style={styles.button} onPress={handleSignUp}>
         <Text style={styles.buttonText}>Sign Up</Text>
       </Pressable>
-    </View>
+
+      <Link href="/login" style={styles.loginLink}>
+        <Text style={styles.loginLinkText}>Already have an account? Login</Text>
+      </Link>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardAvoidingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center', // Center form elements
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f5f5', // Background for the KAV
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20, // Keep padding for content within scroll view
+    paddingHorizontal: 20,
+  },
+  // container style is removed as its properties are split or moved
   title: {
-    fontSize: 24, // Adjusted size
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20, // Adjusted margin
+    marginBottom: 20,
     textAlign: 'center',
     color: '#333',
   },
-  input: {
+  input: { // Input styles remain largely the same
     width: '80%', // Width for input fields
     height: 45, // Height for input fields
     backgroundColor: '#fff',
@@ -184,5 +227,14 @@ const styles = StyleSheet.create({
   },
   successMessage: {
     color: 'green',
+  },
+  loginLink: {
+    marginTop: 20, // Adjusted from 15 to provide a bit more space from button
+    padding: 5, // Add some padding to make it easier to press
+  },
+  loginLinkText: {
+    color: '#007bff',
+    textAlign: 'center',
+    fontSize: 16, // Match other text where appropriate
   },
 });

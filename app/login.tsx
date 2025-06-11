@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, Pressable } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  Alert, // Keep Alert if used, though not explicitly in provided snippet for KAV
+} from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { getDBConnection, findUserByEmail, findUserByPhone, initDatabase, User } from '../src/database';
 import { type SQLiteDatabase } from 'expo-sqlite';
@@ -64,10 +74,17 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoidingContainer}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Login</Text>
 
-      <TextInput
+        <TextInput
         style={styles.input}
         placeholder="Email or Phone"
         value={identifier}
@@ -99,26 +116,32 @@ export default function LoginScreen() {
       <Link href="/signup" style={styles.link}>
         Don't have an account? Sign Up
       </Link>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardAvoidingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center', // Center form elements
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f5f5', // Background color for the whole screen
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20, // Retain vertical padding
+    paddingHorizontal: 20, // Retain horizontal padding
+  },
+  // container style is removed as its properties are split or moved
   title: {
-    fontSize: 24, // Adjusted size
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20, // Adjusted margin
+    marginBottom: 20,
     textAlign: 'center',
     color: '#333',
   },
-  input: {
+  input: { // Input styles remain largely the same, width % works with alignItems: 'center'
     width: '80%', // Width for input fields
     height: 45, // Height for input fields
     backgroundColor: '#fff',
