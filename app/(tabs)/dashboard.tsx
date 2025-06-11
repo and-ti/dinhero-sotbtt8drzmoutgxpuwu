@@ -1,7 +1,7 @@
 import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert } from "react-native";
 import React, { useEffect, useState } from 'react';
 import * as SQLite from 'expo-sqlite';
-import { getDBConnection, initDatabase, addItem, getAllItems } from '../src/database'; // Adjusted path
+import { getDBConnection, initDatabase, addItem, getAllItems } from '../../src/database'; // Adjusted path
 
 interface Item {
   id: number;

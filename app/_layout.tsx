@@ -1,87 +1,20 @@
-import { Tabs, Link } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { Pressable } from "react-native";
+// File: app/_layout.tsx
+import { Stack } from "expo-router";
+// import { useAuth } // Hypothetical auth hook for future session management
 
 export default function RootLayout() {
-  return (
-    <Tabs
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+  // const { isAuthenticated } = useAuth(); // Example for future conditional navigation
+  // For now, navigation is driven by app/index.tsx redirecting to login,
+  // and login.tsx redirecting to (tabs)/dashboard on success.
 
-          if (route.name === "dashboard") {
-            iconName = focused ? "home" : "home-outline";
-          } else if (route.name === "transacoes") {
-            iconName = focused ? "list" : "list-outline";
-          } else if (route.name === "debitos") {
-            iconName = focused ? "card" : "card-outline";
-          } else if (route.name === "metas") {
-            iconName = focused ? "ribbon" : "ribbon-outline";
-          } else if (route.name === "orcamentos") {
-            iconName = focused ? "calculator" : "calculator-outline";
-          }
-          return <Ionicons name={iconName as any} size={size} color={color} />;
-        },
-      })}
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: "Dashboard",
-          headerRight: () => (
-            <Link href="/settings" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <Ionicons
-                    name="person-circle-outline"
-                    size={25}
-                    color="gray"
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="transacoes"
-        options={{
-          title: "Transações",
-        }}
-      />
-      <Tabs.Screen
-        name="debitos"
-        options={{
-          title: "Débitos",
-        }}
-      />
-      <Tabs.Screen
-        name="metas"
-        options={{
-          title: "Metas",
-        }}
-      />
-      <Tabs.Screen
-        name="orcamentos"
-        options={{
-          title: "Orçamentos",
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Configurações",
-          href: null,
-        }}
-      />
-      {/* Add this entry to hide the index route from tabs */}
-      <Tabs.Screen
-        name="index" // This corresponds to app/index.tsx
-        options={{
-          href: null, // Hides it from the tab bar
-        }}
-      />
-    </Tabs>
+  return (
+    <Stack>
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="signup" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      {/* index.tsx handles the initial redirect, so no Stack.Screen name="index" is needed here
+          if index.tsx only contains a Redirect. If app/index.tsx were a visible screen,
+          it would need a Stack.Screen entry. */}
+    </Stack>
   );
 }
