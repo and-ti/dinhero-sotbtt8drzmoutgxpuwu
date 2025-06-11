@@ -140,7 +140,7 @@ describe('SignUpScreen', () => {
      const error = new Error('UNIQUE constraint failed: users.email');
     (database.addUser as jest.Mock).mockRejectedValue(error);
 
-    const { getByPlaceholderText, getByText, findByText }_ = render(<SignUpScreen />);
+    const { getByPlaceholderText, getByText, findByText } = render(<SignUpScreen />);
 
     fireEvent.changeText(getByPlaceholderText('Full Name (e.g., John Doe)'), 'Existing User');
     fireEvent.changeText(getByPlaceholderText('Email'), 'exists@example.com');
