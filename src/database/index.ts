@@ -1,95 +1,44 @@
-import * as SQLite from 'expo-sqlite';
+import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 
-export const getDBConnection = () => {
-  return SQLite.openDatabase('mydatabase.db');
+// Define a type for your item for better type safety
+export interface Item {
+  id: number;
+  name: string;
+}
+
+// Open the database connection
+export const getDBConnection = (): SQLiteDatabase => {
+  return openDatabaseSync('dinhero.db');
 };
 
-export const initDatabase = (db: SQLite.SQLiteDatabase) => {
-  return new Promise<void>((resolve, reject) => {
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          'CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);'
-        );
-      },
-      error => reject(error),
-      () => resolve()
-    );
-  });
+// Initialize the database with a schema
+export const initDatabase = async (db: SQLiteDatabase): Promise<void> => {
+  await db.execAsync(`
+    PRAGMA journal_mode = WAL;
+    CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);
+  `);
 };
 
-export const addItem = (db: SQLite.SQLiteDatabase, name: string): Promise<number> => {
-  return new Promise((resolve, reject) => {
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          'INSERT INTO items (name) values (?);',
-          [name],
-          (_, result) => resolve(result.insertId!),
-          (_, error) => {
-            reject(error);
-            return false; // Rollback
-          }
-        );
-      },
-      error => reject(error) // Transaction error
-    );
-  });
+// Add an item and return its new ID
+export const addItem = async (db: SQLiteDatabase, name: string): Promise<number> => {
+  const result = await db.runAsync('INSERT INTO items (name) VALUES (?);', name);
+  return result.lastInsertRowId;
 };
 
-export const getAllItems = (db: SQLite.SQLiteDatabase): Promise<{ id: number; name: string }[]> => {
-  return new Promise((resolve, reject) => {
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          'SELECT * FROM items;',
-          [],
-          (_, result) => resolve(result.rows._array),
-          (_, error) => {
-            reject(error);
-            return false; // Rollback
-          }
-        );
-      },
-      error => reject(error) // Transaction error
-    );
-  });
+// Retrieve all items
+export const getAllItems = async (db: SQLiteDatabase): Promise<Item[]> => {
+  const items = await db.getAllAsync<Item>('SELECT * FROM items ORDER BY id DESC;');
+  return items;
 };
 
-export const updateItem = (db: SQLite.SQLiteDatabase, id: number, name: string): Promise<number> => {
-  return new Promise((resolve, reject) => {
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          'UPDATE items SET name = ? WHERE id = ?;',
-          [name, id],
-          (_, result) => resolve(result.rowsAffected),
-          (_, error) => {
-            reject(error);
-            return false; // Rollback
-          }
-        );
-      },
-      error => reject(error) // Transaction error
-    );
-  });
+// Update an existing item and return the number of affected rows
+export const updateItem = async (db: SQLiteDatabase, id: number, name: string): Promise<number> => {
+  const result = await db.runAsync('UPDATE items SET name = ? WHERE id = ?;', name, id);
+  return result.changes;
 };
 
-export const deleteItem = (db: SQLite.SQLiteDatabase, id: number): Promise<number> => {
-  return new Promise((resolve, reject) => {
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          'DELETE FROM items WHERE id = ?;',
-          [id],
-          (_, result) => resolve(result.rowsAffected),
-          (_, error) => {
-            reject(error);
-            return false; // Rollback
-          }
-        );
-      },
-      error => reject(error) // Transaction error
-    );
-  });
+// Delete an item and return the number of affected rows
+export const deleteItem = async (db: SQLiteDatabase, id: number): Promise<number> => {
+  const result = await db.runAsync('DELETE FROM items WHERE id = ?;', id);
+  return result.changes;
 };
