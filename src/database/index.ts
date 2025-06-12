@@ -90,3 +90,27 @@ export const findFamilyByName = async (db: SQLiteDatabase, name: string): Promis
   const family = await db.getFirstAsync<Family>('SELECT * FROM families WHERE name = ?;', name);
   return family;
 };
+
+// Get a user by ID
+export const getUserById = async (db: SQLiteDatabase, id: number): Promise<User | null> => {
+  const user = await db.getFirstAsync<User>('SELECT * FROM users WHERE id = ?;', id);
+  return user;
+};
+
+// Get a family by ID
+export const getFamilyById = async (db: SQLiteDatabase, id: number): Promise<Family | null> => {
+  const family = await db.getFirstAsync<Family>('SELECT * FROM families WHERE id = ?;', id);
+  return family;
+};
+
+// Update a user's family ID
+export const updateUserFamilyId = async (db: SQLiteDatabase, userId: number, familyId: number | null): Promise<number> => {
+  const result = await db.runAsync('UPDATE users SET family_id = ? WHERE id = ?;', familyId, userId);
+  return result.changes;
+};
+
+// Get all users by family ID
+export const getUsersByFamilyId = async (db: SQLiteDatabase, familyId: number): Promise<User[]> => {
+  const users = await db.getAllAsync<User>('SELECT * FROM users WHERE family_id = ?;', familyId);
+  return users;
+};
