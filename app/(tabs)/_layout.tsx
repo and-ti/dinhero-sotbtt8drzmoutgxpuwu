@@ -1,6 +1,6 @@
 // File: app/(tabs)/_layout.tsx
-import { Tabs, Link, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Tabs, useRouter } from "expo-router";
 import { Pressable } from "react-native";
 
 export default function TabLayout() { // Renamed function for clarity
@@ -71,13 +71,6 @@ export default function TabLayout() { // Renamed function for clarity
           title: "Orçamentos",
         }}
       />
-      {/* <Tabs.Screen
-        name="settings" // Corresponds to app/(tabs)/settings.tsx
-        options={{
-          title: "Configurações",
-          href: null, // Hides it from being a directly navigable tab, typically shown via other means
-        }}
-      /> */}
     </Tabs>
   );
 }
