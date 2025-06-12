@@ -179,7 +179,7 @@ export default function FamilySettingsScreen() {
     //     currentDb.closeAsync();
     //   }
     // };
-  }, [db]); // Add db to dependency array as fetchFamilyMembers depends on it.
+  }, []); // CORRECTED to empty dependency array to run only once on mount
 
   if (isLoading) {
     return (

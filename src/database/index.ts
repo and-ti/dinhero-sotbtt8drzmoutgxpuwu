@@ -29,12 +29,10 @@ export const getDBConnection = (): SQLiteDatabase => {
 
 // Initialize the database with a schema
 export const initDatabase = async (db: SQLiteDatabase): Promise<void> => {
-  await db.execAsync(`
-    PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS families (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);
-    CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT UNIQUE, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, family_id INTEGER, FOREIGN KEY (family_id) REFERENCES families(id));
-    CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);
-  `);
+  await db.execAsync('PRAGMA journal_mode = WAL;');
+  await db.execAsync('CREATE TABLE IF NOT EXISTS families (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);');
+  await db.execAsync('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT UNIQUE, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, family_id INTEGER, FOREIGN KEY (family_id) REFERENCES families(id));');
+  await db.execAsync('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);');
 };
 
 // Add an item and return its new ID
