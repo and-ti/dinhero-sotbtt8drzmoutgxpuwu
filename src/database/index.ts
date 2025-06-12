@@ -29,12 +29,10 @@ export const getDBConnection = (): SQLiteDatabase => {
 
 // Initialize the database with a schema
 export const initDatabase = async (db: SQLiteDatabase): Promise<void> => {
-  await db.execAsync(`
-    PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS families (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);
-    CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT UNIQUE, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, family_id INTEGER, FOREIGN KEY (family_id) REFERENCES families(id));
-    CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);
-  `);
+  await db.execAsync('PRAGMA journal_mode = WAL;');
+  await db.execAsync('CREATE TABLE IF NOT EXISTS families (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);');
+  await db.execAsync('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT UNIQUE, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, family_id INTEGER, FOREIGN KEY (family_id) REFERENCES families(id));');
+  await db.execAsync('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);');
 };
 
 // Add an item and return its new ID
@@ -89,4 +87,28 @@ export const addFamily = async (db: SQLiteDatabase, name: string): Promise<numbe
 export const findFamilyByName = async (db: SQLiteDatabase, name: string): Promise<Family | null> => {
   const family = await db.getFirstAsync<Family>('SELECT * FROM families WHERE name = ?;', name);
   return family;
+};
+
+// Get a user by ID
+export const getUserById = async (db: SQLiteDatabase, id: number): Promise<User | null> => {
+  const user = await db.getFirstAsync<User>('SELECT * FROM users WHERE id = ?;', id);
+  return user;
+};
+
+// Get a family by ID
+export const getFamilyById = async (db: SQLiteDatabase, id: number): Promise<Family | null> => {
+  const family = await db.getFirstAsync<Family>('SELECT * FROM families WHERE id = ?;', id);
+  return family;
+};
+
+// Update a user's family ID
+export const updateUserFamilyId = async (db: SQLiteDatabase, userId: number, familyId: number | null): Promise<number> => {
+  const result = await db.runAsync('UPDATE users SET family_id = ? WHERE id = ?;', familyId, userId);
+  return result.changes;
+};
+
+// Get all users by family ID
+export const getUsersByFamilyId = async (db: SQLiteDatabase, familyId: number): Promise<User[]> => {
+  const users = await db.getAllAsync<User>('SELECT * FROM users WHERE family_id = ?;', familyId);
+  return users;
 };
