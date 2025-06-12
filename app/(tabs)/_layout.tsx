@@ -77,7 +77,6 @@ export default function TabLayout() { // Renamed function for clarity
           href: null, // Hides it from being a directly navigable tab, typically shown via other means
         }}
       />
-      {/* The Tabs.Screen for 'index' is removed as it's no longer part of this navigator. */}
     </Tabs>
   );
 }
