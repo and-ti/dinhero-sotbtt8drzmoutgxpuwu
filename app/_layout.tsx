@@ -11,6 +11,7 @@ export default function RootLayout() {
     <Stack>
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" options={{ title: "Configurações", presentation: "modal" }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       {/* index.tsx handles the initial redirect, so no Stack.Screen name="index" is needed here
           if index.tsx only contains a Redirect. If app/index.tsx were a visible screen,

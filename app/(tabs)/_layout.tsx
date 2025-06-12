@@ -1,5 +1,5 @@
 // File: app/(tabs)/_layout.tsx
-import { Tabs, Link } from "expo-router";
+import { Tabs, Link, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable } from "react-native";
 
@@ -8,7 +8,7 @@ export default function TabLayout() { // Renamed function for clarity
     <Tabs
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+          let iconName: any = 'alert-circle-outline';
 
           if (route.name === "dashboard") {
             iconName = focused ? "home" : "home-outline";
@@ -30,9 +30,10 @@ export default function TabLayout() { // Renamed function for clarity
         name="dashboard" // Corresponds to app/(tabs)/dashboard.tsx
         options={{
           title: "Dashboard",
-          headerRight: () => (
-            <Link href="/settings" asChild> {/* Should resolve to app/(tabs)/settings.tsx */}
-              <Pressable>
+          headerRight: () => {
+            const router = useRouter(); // Hook must be called inside the functional component
+            return (
+              <Pressable onPress={() => router.push('/settings')}>
                 {({ pressed }) => (
                   <Ionicons
                     name="person-circle-outline"
@@ -42,8 +43,8 @@ export default function TabLayout() { // Renamed function for clarity
                   />
                 )}
               </Pressable>
-            </Link>
-          ),
+            );
+          },
         }}
       />
       <Tabs.Screen
@@ -70,13 +71,13 @@ export default function TabLayout() { // Renamed function for clarity
           title: "Orçamentos",
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="settings" // Corresponds to app/(tabs)/settings.tsx
         options={{
           title: "Configurações",
           href: null, // Hides it from being a directly navigable tab, typically shown via other means
         }}
-      />
+      /> */}
     </Tabs>
   );
 }
