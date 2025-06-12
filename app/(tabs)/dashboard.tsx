@@ -2,6 +2,7 @@ import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert } from "reac
 import React, { useEffect, useState } from 'react';
 import * as SQLite from 'expo-sqlite';
 import { getDBConnection, initDatabase, addItem, getAllItems } from '../../src/database'; // Adjusted path
+import theme from '../../src/styles/theme'; // Import the theme
 
 interface Item {
   id: number;
@@ -64,7 +65,7 @@ export default function DashboardScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <Text>Loading database...</Text>
+        <Text style={{ fontFamily: theme.FONTS.regular, fontSize: theme.FONTS.sizes.medium, color: theme.COLORS.subtleText }}>Loading database...</Text>
       </View>
     );
   }
@@ -79,8 +80,10 @@ export default function DashboardScreen() {
           placeholder="Enter item name"
           value={newItemName}
           onChangeText={setNewItemName}
+          placeholderTextColor={theme.COLORS.subtleText} // Use theme color for placeholder
         />
-        <Button title="Add Item" onPress={handleAddItem} />
+        {/* Consider styling Button component or using a custom Pressable for more control */}
+        <Button title="Add Item" onPress={handleAddItem} color={theme.COLORS.primary} />
       </View>
 
       <Text style={styles.subtitle}>Items:</Text>
@@ -89,10 +92,10 @@ export default function DashboardScreen() {
         keyExtractor={item => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
-            <Text>{item.id}: {item.name}</Text>
+            <Text style={{ fontFamily: theme.FONTS.regular, color: theme.COLORS.text }}>{item.id}: {item.name}</Text>
           </View>
         )}
-        ListEmptyComponent={<Text>No items yet. Add some!</Text>}
+        ListEmptyComponent={<Text style={{ fontFamily: theme.FONTS.regular, color: theme.COLORS.subtleText, textAlign: 'center', marginTop: theme.SPACING.medium }}>No items yet. Add some!</Text>}
         style={styles.list}
       />
     </View>
@@ -102,48 +105,80 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: theme.SPACING.medium, // Use theme spacing
+    backgroundColor: theme.COLORS.background, // Use theme background color
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.COLORS.background, // Use theme background color
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontSize: theme.FONTS.sizes.xlarge, // Use theme font size
+    fontFamily: theme.FONTS.bold, // Use theme font
+    color: theme.COLORS.primary, // Use theme primary color
+    marginBottom: theme.SPACING.medium, // Use theme spacing
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
+    fontSize: theme.FONTS.sizes.large, // Use theme font size
+    fontFamily: theme.FONTS.bold, // Use theme font
+    color: theme.COLORS.text, // Use theme text color
+    marginTop: theme.SPACING.medium, // Use theme spacing
+    marginBottom: theme.SPACING.small, // Use theme spacing
   },
   inputContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: theme.SPACING.medium, // Use theme spacing
+    alignItems: 'center', // Align items for better layout with button
   },
   input: {
     flex: 1,
-    height: 40,
-    borderColor: 'gray',
+    height: 44, // Adjusted height for better touch target
+    borderColor: theme.COLORS.lightGray, // Use theme border color
     borderWidth: 1,
-    paddingHorizontal: 8,
-    marginRight: 8,
+    borderRadius: theme.BORDER_RADIUS.small, // Use theme border radius
+    paddingHorizontal: theme.SPACING.small, // Use theme spacing
+    marginRight: theme.SPACING.small, // Use theme spacing
+    fontFamily: theme.FONTS.regular, // Use theme font
+    fontSize: theme.FONTS.sizes.medium, // Use theme font size
+    backgroundColor: theme.COLORS.white, // Input background
+    color: theme.COLORS.text,
   },
   list: {
     flexGrow: 1,
   },
   itemContainer: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomColor: '#ccc',
+    paddingVertical: theme.SPACING.small, // Use theme spacing
+    paddingHorizontal: theme.SPACING.small, // Use theme spacing
+    borderBottomColor: theme.COLORS.lightGray, // Use theme border color
     borderBottomWidth: 1,
-    backgroundColor: '#f9f9f9',
-    marginBottom: 4,
-    borderRadius: 4,
+    backgroundColor: theme.COLORS.cardBackground, // Use theme card background
+    marginBottom: theme.SPACING.small, // Use theme spacing
+    borderRadius: theme.BORDER_RADIUS.small, // Use theme border radius
   },
 });
+
+// Note: The Button component has limited styling options.
+// For a fully themed button, a custom component using <Pressable> and <Text> would be needed.
+// For example:
+// <Pressable style={styles.button} onPress={handleAddItem}>
+//   <Text style={styles.buttonText}>Add Item</Text>
+// </Pressable>
+//
+// And in StyleSheet:
+// button: {
+//   backgroundColor: theme.COLORS.primary,
+//   paddingVertical: theme.SPACING.small,
+//   paddingHorizontal: theme.SPACING.medium,
+//   borderRadius: theme.BORDER_RADIUS.small,
+//   alignItems: 'center',
+//   justifyContent: 'center',
+//   height: 44, // Match input height
+// },
+// buttonText: {
+//   color: theme.COLORS.white,
+//   fontFamily: theme.FONTS.bold,
+//   fontSize: theme.FONTS.sizes.medium,
+// }

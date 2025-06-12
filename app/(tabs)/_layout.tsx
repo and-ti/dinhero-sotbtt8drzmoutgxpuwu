@@ -1,7 +1,9 @@
 // File: app/(tabs)/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
-import { Pressable } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
+import theme from '../../src/styles/theme';
+import { BlurView } from 'expo-blur'; // Import BlurView
 
 export default function TabLayout() { // Renamed function for clarity
   return (
@@ -24,8 +26,35 @@ export default function TabLayout() { // Renamed function for clarity
           // Ensure iconName is a valid Ionicons name or handle default
           return <Ionicons name={iconName as any} size={size} color={color} />;
         },
+        tabBarActiveTintColor: theme.COLORS.primary,
+        tabBarInactiveTintColor: theme.COLORS.gray,
+        tabBarStyle: {
+          backgroundColor: 'transparent', // Make tab bar background transparent for blur
+          position: 'absolute', // Important for blur to overlay content correctly
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderTopWidth: 0, // Remove default top border
+          elevation: 0, // Remove shadow on Android
+        },
+        tabBarBackground: () => (
+          <BlurView
+            tint={theme.BLUR_EFFECT.tint}
+            intensity={theme.BLUR_EFFECT.intensity}
+            style={StyleSheet.absoluteFill} // Make BlurView fill the tab bar area
+          />
+        ),
+        headerStyle: {
+          backgroundColor: theme.COLORS.cardBackground, // This still uses a non-blur background
+        },
+        headerTintColor: theme.COLORS.primary,
+        headerTitleStyle: {
+          fontFamily: theme.FONTS.bold,
+          fontSize: theme.FONTS.sizes.large,
+        },
       })}
     >
+      {/* ... Tab.Screen definitions ... */}
       <Tabs.Screen
         name="dashboard" // Corresponds to app/(tabs)/dashboard.tsx
         options={{
@@ -38,7 +67,7 @@ export default function TabLayout() { // Renamed function for clarity
                   <Ionicons
                     name="person-circle-outline"
                     size={25}
-                    color="gray"
+                    color={theme.COLORS.gray} // Use theme color
                     style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
