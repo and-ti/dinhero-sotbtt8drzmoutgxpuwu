@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { Link, useRouter } from 'expo-router';
+import { type SQLiteDatabase } from 'expo-sqlite';
+import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
-  ScrollView,
   Platform,
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
   Pressable,
-  Alert, // Keep Alert if used, though not explicitly in provided snippet for KAV
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput
 } from 'react-native';
-import { useRouter, Link } from 'expo-router';
-import { getDBConnection, findUserByEmail, findUserByPhone, initDatabase, User } from '../src/database';
-import { type SQLiteDatabase } from 'expo-sqlite';
+import { findUserByEmail, findUserByPhone, getDBConnection, initDatabase, User } from '../src/database';
 
 export default function LoginScreen() {
   const router = useRouter();

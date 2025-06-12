@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { Link, useRouter } from 'expo-router';
+import { type SQLiteDatabase } from 'expo-sqlite';
+import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
-  ScrollView,
   Platform,
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
   Pressable,
-  Alert, // Keep Alert if used
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput
 } from 'react-native';
-import { useRouter, Link } from 'expo-router';
-import { getDBConnection, addUser, findFamilyByName, addFamily, initDatabase } from '../src/database';
-import { type SQLiteDatabase } from 'expo-sqlite';
+import { addFamily, addUser, findFamilyByName, getDBConnection, initDatabase } from '../src/database';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -196,7 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 10, // Adjusted padding
     borderRadius: 5,  // Adjusted radius
-    marginBottom: 15,
+    marginBottom: 15, 
     borderWidth: 1,
     borderColor: 'gray', // Standardized border color
     fontSize: 16,
@@ -217,8 +215,8 @@ const styles = StyleSheet.create({
   },
   message: {
     textAlign: 'center',
-    marginTop: 15,
-    marginBottom: 10,
+    marginTop: 15, 
+    marginBottom: 10, 
     fontSize: 16,
     width: '80%',
   },
