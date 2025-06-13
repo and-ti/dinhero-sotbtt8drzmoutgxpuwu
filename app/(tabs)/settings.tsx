@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert, Switch } from 'react-native';
+import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert, Switch, ScrollView } from 'react-native'; // Added ScrollView
 import * as SQLite from 'expo-sqlite';
 import { useTheme } from '../../src/context/ThemeContext';
 import {
@@ -12,6 +12,7 @@ import {
   addFamily,
   getUsersByFamilyId,
   updateUserFamilyId,
+  updateFamilyName, // Added import
   addUser // Ensure addUser is explicitly available
 } from '../../src/database';
 
@@ -24,8 +25,29 @@ export default function FamilySettingsScreen() {
   const [familyMembers, setFamilyMembers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [familyNameInput, setFamilyNameInput] = useState('');
+  const [newFamilyNameInput, setNewFamilyNameInput] = useState('');
   const [newMemberNameInput, setNewMemberNameInput] = useState(''); // Renamed
   const [newMemberEmailInput, setNewMemberEmailInput] = useState(''); // Renamed
+
+  // Helper function to render common header elements
+  const renderCommonHeader = () => (
+    <>
+      <Text style={styles.title}>Family Settings</Text>
+      <View style={styles.themeSettingsContainer}>
+        <Text style={styles.sectionTitle}>Theme Settings</Text>
+        <View style={styles.themeSwitchRow}>
+          <Text style={styles.themeSwitchText}>Current theme: {currentMode}</Text>
+          <Switch
+            trackColor={{ false: theme.COLORS.grey, true: theme.COLORS.primary }}
+            thumbColor={currentMode === 'dark' ? theme.COLORS.lightGrey : theme.COLORS.grey}
+            ios_backgroundColor={theme.COLORS.grey}
+            onValueChange={toggleTheme}
+            value={currentMode === 'dark'}
+          />
+        </View>
+      </View>
+    </>
+  );
 
   const fetchFamilyMembers = async (familyId: number) => {
     if (!db) return;
@@ -35,6 +57,35 @@ export default function FamilySettingsScreen() {
     } catch (error) {
       console.error("Failed to fetch family members:", error);
       Alert.alert("Error", "Could not fetch family members.");
+    }
+  };
+
+  const handleUpdateFamilyName = async () => {
+    if (!newFamilyNameInput.trim()) {
+      Alert.alert("Validation Error", "New family name cannot be empty.");
+      return;
+    }
+    if (!db || !family) {
+      Alert.alert("Error", "Database connection or family data is not available. Please restart the app if this persists.");
+      return;
+    }
+
+    setIsLoading(true); // Disable button while processing
+    try {
+      const rowsAffected = await updateFamilyName(db, family.id, newFamilyNameInput.trim());
+      if (rowsAffected > 0) {
+        // Update local family state to reflect the change immediately
+        setFamily({ ...family, name: newFamilyNameInput.trim() });
+        setNewFamilyNameInput(''); // Clear the input field
+        Alert.alert("Success", "Family name updated successfully!");
+      } else {
+        Alert.alert("Info", "Family name was not updated. It might be the same as the current name or the family was not found.");
+      }
+    } catch (error: any) { // Explicitly typing error as any for simplicity here, consider specific error types
+      console.error("Failed to update family name:", error);
+      Alert.alert("Error", `An error occurred while updating the family name: ${error.message || error}`);
+    } finally {
+      setIsLoading(false); // Re-enable button
     }
   };
 
@@ -192,97 +243,144 @@ export default function FamilySettingsScreen() {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Family Settings</Text>
-
-      <View style={styles.themeSettingsContainer}>
-        <Text style={styles.sectionTitle}>Theme Settings</Text>
-        <View style={styles.themeSwitchRow}>
-          <Text style={styles.themeSwitchText}>Current theme: {currentMode}</Text>
-          <Switch
-            trackColor={{ false: theme.COLORS.grey, true: theme.COLORS.primary }} // These might need to be part of theme.COLORS if more granular control is needed
-            thumbColor={currentMode === 'dark' ? theme.COLORS.lightGrey : theme.COLORS.grey} // Same as above
-            ios_backgroundColor={theme.COLORS.grey} // Same as above
-            onValueChange={toggleTheme}
-            value={currentMode === 'dark'}
-          />
-        </View>
+  // Early return for loading state
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        {renderCommonHeader()}
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
+    );
+  }
 
-      {!currentUser ? (
+  // Early return if no current user
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        {renderCommonHeader()}
         <Text style={styles.errorText}>Error: Current user not loaded. Please try again.</Text>
-      ) : !family && !currentUser.family_id ? (
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Create Your Family</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Family Name"
-            value={familyNameInput}
-            onChangeText={setFamilyNameInput}
-            placeholderTextColor={theme.COLORS.placeholder}
-          />
-          <Button
-            title="Create Family"
-            onPress={handleCreateFamily}
-            disabled={!familyNameInput.trim() || isLoading}
-            color={theme.COLORS.primary}
-          />
-        </View>
-      ) : family ? (
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Family: {family.name}</Text>
-          <Text style={styles.subheading}>Members:</Text>
-          {familyMembers.length > 0 ? (
-            <FlatList
-              data={familyMembers}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <Text style={styles.memberItem}>{item.name}</Text>}
-              style={styles.list}
-            />
-          ) : (
-            <Text style={styles.bodyText}>No members yet. You are the only member.</Text>
-          )}
+      </View>
+    );
+  }
 
-          {/* Add New Member Form */}
-          <View style={styles.addMemberContainer}>
-            <Text style={styles.subheading}>Add New Member</Text>
+  // If user has no family, show "Create Family" screen
+  if (!family && !currentUser.family_id) {
+    return (
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContentContainer}>
+          {renderCommonHeader()}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Create Your Family</Text>
             <TextInput
               style={styles.input}
-              placeholder="Member's Name"
-              value={newMemberNameInput}
-              onChangeText={setNewMemberNameInput}
+              placeholder="Enter Family Name"
+              value={familyNameInput}
+              onChangeText={setFamilyNameInput}
               placeholderTextColor={theme.COLORS.placeholder}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Member's Email"
-              value={newMemberEmailInput}
-              onChangeText={setNewMemberEmailInput}
-              placeholderTextColor={theme.COLORS.placeholder}
-              keyboardType="email-address"
-              autoCapitalize="none"
             />
             <Button
-              title="Add Member"
-              onPress={handleAddNewMember}
-              disabled={!newMemberNameInput.trim() || !newMemberEmailInput.trim() || isLoading}
+              title="Create Family"
+              onPress={handleCreateFamily}
+              disabled={!familyNameInput.trim() || isLoading}
               color={theme.COLORS.primary}
             />
           </View>
-        </View>
-      ) : (
-        <Text style={styles.bodyText}>Loading family details...</Text>
-      )}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // If family data is available, show family details and members using FlatList
+  if (family) {
+    return (
+      <View style={styles.container}>
+        <FlatList
+          data={familyMembers}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.scrollContentContainer}
+          ListHeaderComponent={
+            <>
+              {renderCommonHeader()}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Family: {family.name}</Text>
+                <Text style={styles.subheading}>Change Family Name</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter new family name"
+                  value={newFamilyNameInput}
+                  onChangeText={setNewFamilyNameInput}
+                  placeholderTextColor={theme.COLORS.placeholder}
+                />
+                <Button
+                  title="Update Family Name"
+                  onPress={handleUpdateFamilyName}
+                  color={theme.COLORS.primary}
+                  disabled={!newFamilyNameInput.trim() || isLoading}
+                />
+              </View>
+              {familyMembers.length > 0 && <Text style={[styles.subheading, { paddingHorizontal: 20 }]}>Members:</Text>}
+            </>
+          }
+          renderItem={({ item }) => <View style={{paddingHorizontal: 20}}><Text style={styles.memberItem}>{item.name}</Text></View>}
+          ListFooterComponent={
+            <View style={styles.addMemberContainer}>
+              <Text style={styles.subheading}>Add New Member</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Member's Name"
+                value={newMemberNameInput}
+                onChangeText={setNewMemberNameInput}
+                placeholderTextColor={theme.COLORS.placeholder}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Member's Email"
+                value={newMemberEmailInput}
+                onChangeText={setNewMemberEmailInput}
+                placeholderTextColor={theme.COLORS.placeholder}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <Button
+                title="Add Member"
+                onPress={handleAddNewMember}
+                disabled={!newMemberNameInput.trim() || !newMemberEmailInput.trim() || isLoading}
+                color={theme.COLORS.primary}
+              />
+            </View>
+          }
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+              <Text style={styles.bodyText}>No other members have been added to this family yet.</Text>
+            </View>
+          }
+        />
+      </View>
+    );
+  }
+
+  // Fallback for when family_id exists but family object is null (still loading or error)
+  return (
+    <View style={styles.container}>
+      {renderCommonHeader()}
+      <Text style={styles.loadingText}>Loading family details...</Text>
     </View>
   );
 }
 
+// Styles remain largely the same, with scrollContentContainer for padding.
+// Ensure styles.container has flex: 1 and backgroundColor.
+// styles.list might be redundant.
+// styles.updateFamilyNameContainer might be redundant or its content merged.
 const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: theme.COLORS.background,
+  },
+  scrollContentContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 80, // Increased bottom padding
   },
   title: {
     fontSize: 28,
@@ -348,6 +446,7 @@ const getStyles = (theme) => StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.COLORS.borderColor,
   },
+  // updateFamilyNameContainer is removed as its content is merged into ListHeaderComponent's sectionContainer
   input: {
     borderWidth: 1,
     borderRadius: 5,
@@ -358,9 +457,8 @@ const getStyles = (theme) => StyleSheet.create({
     backgroundColor: theme.COLORS.inputBackground,
     color: theme.COLORS.text,
   },
-  list: {
-    marginTop: 5,
-  },
+  // list style might be redundant as FlatList handles its own scrolling and layout.
+  // Ensure memberItem is styled appropriately for its new context if needed.
   memberItem: {
     fontSize: 16,
     paddingVertical: 8,
