@@ -101,6 +101,12 @@ export const getFamilyById = async (db: SQLiteDatabase, id: number): Promise<Fam
   return family;
 };
 
+// Update a family's name
+export const updateFamilyName = async (db: SQLiteDatabase, familyId: number, newName: string): Promise<number> => {
+  const result = await db.runAsync('UPDATE families SET name = ? WHERE id = ?;', newName, familyId);
+  return result.changes;
+};
+
 // Update a user's family ID
 export const updateUserFamilyId = async (db: SQLiteDatabase, userId: number, familyId: number | null): Promise<number> => {
   const result = await db.runAsync('UPDATE users SET family_id = ? WHERE id = ?;', familyId, userId);

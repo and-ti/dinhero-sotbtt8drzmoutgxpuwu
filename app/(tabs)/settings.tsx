@@ -12,6 +12,7 @@ import {
   addFamily,
   getUsersByFamilyId,
   updateUserFamilyId,
+  updateFamilyName, // Added import
   addUser // Ensure addUser is explicitly available
 } from '../../src/database';
 
@@ -24,6 +25,7 @@ export default function FamilySettingsScreen() {
   const [familyMembers, setFamilyMembers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [familyNameInput, setFamilyNameInput] = useState('');
+  const [newFamilyNameInput, setNewFamilyNameInput] = useState('');
   const [newMemberNameInput, setNewMemberNameInput] = useState(''); // Renamed
   const [newMemberEmailInput, setNewMemberEmailInput] = useState(''); // Renamed
 
@@ -35,6 +37,35 @@ export default function FamilySettingsScreen() {
     } catch (error) {
       console.error("Failed to fetch family members:", error);
       Alert.alert("Error", "Could not fetch family members.");
+    }
+  };
+
+  const handleUpdateFamilyName = async () => {
+    if (!newFamilyNameInput.trim()) {
+      Alert.alert("Validation Error", "New family name cannot be empty.");
+      return;
+    }
+    if (!db || !family) {
+      Alert.alert("Error", "Database connection or family data is not available. Please restart the app if this persists.");
+      return;
+    }
+
+    setIsLoading(true); // Disable button while processing
+    try {
+      const rowsAffected = await updateFamilyName(db, family.id, newFamilyNameInput.trim());
+      if (rowsAffected > 0) {
+        // Update local family state to reflect the change immediately
+        setFamily({ ...family, name: newFamilyNameInput.trim() });
+        setNewFamilyNameInput(''); // Clear the input field
+        Alert.alert("Success", "Family name updated successfully!");
+      } else {
+        Alert.alert("Info", "Family name was not updated. It might be the same as the current name or the family was not found.");
+      }
+    } catch (error: any) { // Explicitly typing error as any for simplicity here, consider specific error types
+      console.error("Failed to update family name:", error);
+      Alert.alert("Error", `An error occurred while updating the family name: ${error.message || error}`);
+    } finally {
+      setIsLoading(false); // Re-enable button
     }
   };
 
@@ -270,6 +301,24 @@ export default function FamilySettingsScreen() {
               color={theme.COLORS.primary}
             />
           </View>
+
+          {/* Update Family Name Form */}
+          <View style={styles.updateFamilyNameContainer}>
+            <Text style={styles.subheading}>Change Family Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter new family name"
+              value={newFamilyNameInput}
+              onChangeText={setNewFamilyNameInput}
+              placeholderTextColor={theme.COLORS.placeholder}
+            />
+            <Button
+              title="Update Family Name"
+              onPress={handleUpdateFamilyName}
+              color={theme.COLORS.primary}
+              disabled={!newFamilyNameInput.trim() || isLoading} // Disable if input is empty or loading
+            />
+          </View>
         </View>
       ) : (
         <Text style={styles.bodyText}>Loading family details...</Text>
@@ -343,6 +392,12 @@ const getStyles = (theme) => StyleSheet.create({
     color: theme.COLORS.text,
   },
   addMemberContainer: {
+    marginTop: 20,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: theme.COLORS.borderColor,
+  },
+  updateFamilyNameContainer: {
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,
