@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert, Switch } from 'react-native';
+import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert, Switch, ScrollView } from 'react-native'; // Added ScrollView
 import * as SQLite from 'expo-sqlite';
 import { useTheme } from '../../src/context/ThemeContext';
 import {
@@ -224,7 +224,7 @@ export default function FamilySettingsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContentContainer}>
       <Text style={styles.title}>Family Settings</Text>
 
       <View style={styles.themeSettingsContainer}>
@@ -323,15 +323,17 @@ export default function FamilySettingsScreen() {
       ) : (
         <Text style={styles.bodyText}>Loading family details...</Text>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
 const getStyles = (theme) => StyleSheet.create({
-  container: {
+  container: { // Retains flex and backgroundColor
     flex: 1,
-    padding: 20,
     backgroundColor: theme.COLORS.background,
+  },
+  scrollContentContainer: { // New style for padding
+    padding: 20,
   },
   title: {
     fontSize: 28,
