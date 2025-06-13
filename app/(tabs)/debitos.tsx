@@ -1,7 +1,11 @@
 import { Text, View, StyleSheet } from "react-native";
-import theme from '../../src/styles/theme'; // Import theme
+import { useTheme } from '../../src/context/ThemeContext'; // ADD THIS
+import { commonStyles } from '../../src/styles/theme'; // Import commonStyles
 
 export default function DebitosScreen() {
+  const { theme } = useTheme(); // ADD THIS
+  const styles = getDynamicStyles(theme); // ADD THIS
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Débitos Screen</Text>
@@ -9,16 +13,18 @@ export default function DebitosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Function to generate styles based on the current theme
+const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: theme.COLORS.background, // Use theme background
+    backgroundColor: theme.COLORS.background, // Dynamic background
+    padding: commonStyles.SPACING.medium,
   },
   text: {
-    fontFamily: theme.FONTS.regular,
-    fontSize: theme.FONTS.sizes.medium,
-    color: theme.COLORS.text,
+    fontFamily: commonStyles.FONTS.regular,
+    fontSize: commonStyles.FONTS.sizes.medium,
+    color: theme.COLORS.text, // Dynamic text color
   },
 });

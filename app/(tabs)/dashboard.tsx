@@ -2,7 +2,9 @@ import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert } from "reac
 import React, { useEffect, useState } from 'react';
 import * as SQLite from 'expo-sqlite';
 import { getDBConnection, initDatabase, addItem, getAllItems } from '../../src/database'; // Adjusted path
-import theme from '../../src/styles/theme'; // Import the theme
+// import theme from '../../src/styles/theme'; // REMOVE THIS
+import { useTheme } from '../../src/context/ThemeContext'; // ADD THIS
+import { commonStyles } from '../../src/styles/theme'; // Import commonStyles
 
 interface Item {
   id: number;
@@ -10,6 +12,9 @@ interface Item {
 }
 
 export default function DashboardScreen() {
+  const { theme } = useTheme(); // ADD THIS
+  const styles = getDynamicStyles(theme); // ADD THIS
+
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [newItemName, setNewItemName] = useState('');
@@ -65,7 +70,7 @@ export default function DashboardScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <Text style={{ fontFamily: theme.FONTS.regular, fontSize: theme.FONTS.sizes.medium, color: theme.COLORS.subtleText }}>Loading database...</Text>
+        <Text style={styles.loadingText}>Loading database...</Text>
       </View>
     );
   }
@@ -80,9 +85,8 @@ export default function DashboardScreen() {
           placeholder="Enter item name"
           value={newItemName}
           onChangeText={setNewItemName}
-          placeholderTextColor={theme.COLORS.subtleText} // Use theme color for placeholder
+          placeholderTextColor={theme.COLORS.subtleText}
         />
-        {/* Consider styling Button component or using a custom Pressable for more control */}
         <Button title="Add Item" onPress={handleAddItem} color={theme.COLORS.primary} />
       </View>
 
@@ -92,72 +96,87 @@ export default function DashboardScreen() {
         keyExtractor={item => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
-            <Text style={{ fontFamily: theme.FONTS.regular, color: theme.COLORS.text }}>{item.id}: {item.name}</Text>
+            <Text style={styles.itemText}>{item.id}: {item.name}</Text>
           </View>
         )}
-        ListEmptyComponent={<Text style={{ fontFamily: theme.FONTS.regular, color: theme.COLORS.subtleText, textAlign: 'center', marginTop: theme.SPACING.medium }}>No items yet. Add some!</Text>}
+        ListEmptyComponent={<Text style={styles.emptyListText}>No items yet. Add some!</Text>}
         style={styles.list}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
   container: {
     flex: 1,
-    padding: theme.SPACING.medium, // Use theme spacing
-    backgroundColor: theme.COLORS.background, // Use theme background color
+    padding: commonStyles.SPACING.medium,
+    backgroundColor: theme.COLORS.background,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.COLORS.background, // Use theme background color
+    backgroundColor: theme.COLORS.background,
+  },
+  loadingText: {
+    fontFamily: commonStyles.FONTS.regular,
+    fontSize: commonStyles.FONTS.sizes.medium,
+    color: theme.COLORS.subtleText,
   },
   title: {
-    fontSize: theme.FONTS.sizes.xlarge, // Use theme font size
-    fontFamily: theme.FONTS.bold, // Use theme font
-    color: theme.COLORS.primary, // Use theme primary color
-    marginBottom: theme.SPACING.medium, // Use theme spacing
+    fontSize: commonStyles.FONTS.sizes.xlarge,
+    fontFamily: commonStyles.FONTS.bold,
+    color: theme.COLORS.primary,
+    marginBottom: commonStyles.SPACING.medium,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: theme.FONTS.sizes.large, // Use theme font size
-    fontFamily: theme.FONTS.bold, // Use theme font
-    color: theme.COLORS.text, // Use theme text color
-    marginTop: theme.SPACING.medium, // Use theme spacing
-    marginBottom: theme.SPACING.small, // Use theme spacing
+    fontSize: commonStyles.FONTS.sizes.large,
+    fontFamily: commonStyles.FONTS.bold,
+    color: theme.COLORS.text,
+    marginTop: commonStyles.SPACING.medium,
+    marginBottom: commonStyles.SPACING.small,
   },
   inputContainer: {
     flexDirection: 'row',
-    marginBottom: theme.SPACING.medium, // Use theme spacing
-    alignItems: 'center', // Align items for better layout with button
+    marginBottom: commonStyles.SPACING.medium,
+    alignItems: 'center',
   },
   input: {
     flex: 1,
-    height: 44, // Adjusted height for better touch target
-    borderColor: theme.COLORS.lightGray, // Use theme border color
+    height: 44,
+    borderColor: theme.COLORS.borderColor,
     borderWidth: 1,
-    borderRadius: theme.BORDER_RADIUS.small, // Use theme border radius
-    paddingHorizontal: theme.SPACING.small, // Use theme spacing
-    marginRight: theme.SPACING.small, // Use theme spacing
-    fontFamily: theme.FONTS.regular, // Use theme font
-    fontSize: theme.FONTS.sizes.medium, // Use theme font size
-    backgroundColor: theme.COLORS.white, // Input background
+    borderRadius: commonStyles.BORDER_RADIUS.small,
+    paddingHorizontal: commonStyles.SPACING.small,
+    marginRight: commonStyles.SPACING.small,
+    fontFamily: commonStyles.FONTS.regular,
+    fontSize: commonStyles.FONTS.sizes.medium,
+    backgroundColor: theme.COLORS.inputBackground,
     color: theme.COLORS.text,
   },
   list: {
     flexGrow: 1,
   },
   itemContainer: {
-    paddingVertical: theme.SPACING.small, // Use theme spacing
-    paddingHorizontal: theme.SPACING.small, // Use theme spacing
-    borderBottomColor: theme.COLORS.lightGray, // Use theme border color
+    paddingVertical: commonStyles.SPACING.small,
+    paddingHorizontal: commonStyles.SPACING.small,
+    borderBottomColor: theme.COLORS.lightGray,
     borderBottomWidth: 1,
-    backgroundColor: theme.COLORS.cardBackground, // Use theme card background
-    marginBottom: theme.SPACING.small, // Use theme spacing
-    borderRadius: theme.BORDER_RADIUS.small, // Use theme border radius
+    backgroundColor: theme.COLORS.cardBackground,
+    marginBottom: commonStyles.SPACING.small,
+    borderRadius: commonStyles.BORDER_RADIUS.small,
   },
+  itemText: {
+    fontFamily: commonStyles.FONTS.regular,
+    color: theme.COLORS.text,
+  },
+  emptyListText: {
+    fontFamily: commonStyles.FONTS.regular,
+    color: theme.COLORS.subtleText,
+    textAlign: 'center',
+    marginTop: commonStyles.SPACING.medium,
+  }
 });
 
 // Note: The Button component has limited styling options.
@@ -170,15 +189,15 @@ const styles = StyleSheet.create({
 // And in StyleSheet:
 // button: {
 //   backgroundColor: theme.COLORS.primary,
-//   paddingVertical: theme.SPACING.small,
-//   paddingHorizontal: theme.SPACING.medium,
-//   borderRadius: theme.BORDER_RADIUS.small,
+//   paddingVertical: commonStyles.SPACING.small,
+//   paddingHorizontal: commonStyles.SPACING.medium,
+//   borderRadius: commonStyles.BORDER_RADIUS.small,
 //   alignItems: 'center',
 //   justifyContent: 'center',
 //   height: 44, // Match input height
 // },
 // buttonText: {
 //   color: theme.COLORS.white,
-//   fontFamily: theme.FONTS.bold,
-//   fontSize: theme.FONTS.sizes.medium,
+//   fontFamily: commonStyles.FONTS.bold,
+//   fontSize: commonStyles.FONTS.sizes.medium,
 // }

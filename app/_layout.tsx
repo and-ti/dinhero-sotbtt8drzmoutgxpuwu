@@ -1,21 +1,21 @@
 // File: app/_layout.tsx
 import { Stack } from "expo-router";
-import theme from '../src/styles/theme';
-import { BlurView } from 'expo-blur'; // Import BlurView
-import { StyleSheet } from 'react-native'; // Import StyleSheet
+// Removed direct theme import: import theme from '../src/styles/theme';
+import { BlurView } from 'expo-blur';
+import { StyleSheet } from 'react-native';
+import { ThemeProvider, useTheme } from '../src/context/ThemeContext'; // Import ThemeProvider and useTheme
 
-export default function RootLayout() {
-  // const { isAuthenticated } = useAuth(); // Example for future conditional navigation
-  // For now, navigation is driven by app/index.tsx redirecting to login,
-  // and login.tsx redirecting to (tabs)/dashboard on success.
+// RootLayoutNav component to consume theme after provider is set up
+function RootLayoutNav() {
+  const { theme } = useTheme(); // Now we can use the theme from context
 
   return (
     <Stack
       screenOptions={{
         headerStyle: {
-          backgroundColor: theme.COLORS.background,
+          backgroundColor: theme.COLORS.background, // Use theme from context
         },
-        headerTintColor: theme.COLORS.primary,
+        headerTintColor: theme.COLORS.primary, // Use theme from context
         headerTitleStyle: {
           fontFamily: theme.FONTS.bold,
           fontSize: theme.FONTS.sizes.large,
@@ -29,17 +29,18 @@ export default function RootLayout() {
         options={{
           title: "Configurações",
           presentation: "modal",
-          headerTransparent: true, // Make header transparent to show blur underneath
+          headerTransparent: true,
           headerStyle: {
-            backgroundColor: 'transparent', // Ensure header background is transparent
+            backgroundColor: 'transparent',
           },
           headerBackground: () => (
             <BlurView
-              tint={theme.BLUR_EFFECT.tint}
+              tint={theme.BLUR_EFFECT.tint} // Use theme from context
               intensity={theme.BLUR_EFFECT.intensity}
-              style={StyleSheet.absoluteFill} // Make BlurView fill the header area
+              style={StyleSheet.absoluteFill}
             />
           ),
+          headerTintColor: theme.COLORS.primary, // Ensure modal header icons/text also use theme
         }}
       />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -47,5 +48,13 @@ export default function RootLayout() {
           if index.tsx only contains a Redirect. If app/index.tsx were a visible screen,
           it would need a Stack.Screen entry. */}
     </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutNav />
+    </ThemeProvider>
   );
 }

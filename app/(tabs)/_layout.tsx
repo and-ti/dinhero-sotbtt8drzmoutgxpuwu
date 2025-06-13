@@ -2,13 +2,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
 import { Pressable, StyleSheet } from "react-native";
-import theme from '../../src/styles/theme';
-import { BlurView } from 'expo-blur'; // Import BlurView
+// import theme from '../../src/styles/theme'; // REMOVE THIS
+import { useTheme } from '../../src/context/ThemeContext'; // ADD THIS
+import { BlurView } from 'expo-blur';
 
-export default function TabLayout() { // Renamed function for clarity
+export default function TabLayout() {
+  const { theme } = useTheme(); // ADD THIS
+
   return (
     <Tabs
       screenOptions={({ route }) => ({
+        // ... (icon logic remains the same)
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: any = 'alert-circle-outline';
 
@@ -23,51 +27,50 @@ export default function TabLayout() { // Renamed function for clarity
           } else if (route.name === "orcamentos") {
             iconName = focused ? "calculator" : "calculator-outline";
           }
-          // Ensure iconName is a valid Ionicons name or handle default
           return <Ionicons name={iconName as any} size={size} color={color} />;
         },
-        tabBarActiveTintColor: theme.COLORS.primary,
-        tabBarInactiveTintColor: theme.COLORS.gray,
+        tabBarActiveTintColor: theme.COLORS.primary, // Use theme from hook
+        tabBarInactiveTintColor: theme.COLORS.gray, // Use theme from hook
         tabBarStyle: {
-          backgroundColor: 'transparent', // Make tab bar background transparent for blur
-          position: 'absolute', // Important for blur to overlay content correctly
+          backgroundColor: 'transparent',
+          position: 'absolute',
           left: 0,
           right: 0,
           bottom: 0,
-          borderTopWidth: 0, // Remove default top border
-          elevation: 0, // Remove shadow on Android
+          borderTopWidth: 0,
+          elevation: 0,
         },
         tabBarBackground: () => (
           <BlurView
-            tint={theme.BLUR_EFFECT.tint}
+            tint={theme.BLUR_EFFECT.tint} // Use theme from hook
             intensity={theme.BLUR_EFFECT.intensity}
-            style={StyleSheet.absoluteFill} // Make BlurView fill the tab bar area
+            style={StyleSheet.absoluteFill}
           />
         ),
         headerStyle: {
-          backgroundColor: theme.COLORS.cardBackground, // This still uses a non-blur background
+          backgroundColor: theme.COLORS.cardBackground, // Use theme from hook
         },
-        headerTintColor: theme.COLORS.primary,
+        headerTintColor: theme.COLORS.primary, // Use theme from hook
         headerTitleStyle: {
           fontFamily: theme.FONTS.bold,
           fontSize: theme.FONTS.sizes.large,
         },
       })}
     >
-      {/* ... Tab.Screen definitions ... */}
       <Tabs.Screen
-        name="dashboard" // Corresponds to app/(tabs)/dashboard.tsx
+        name="dashboard"
         options={{
           title: "Dashboard",
           headerRight: () => {
-            const router = useRouter(); // Hook must be called inside the functional component
+            // Note: `useRouter` is fine, but `useTheme` must be in the body of `TabLayout`
+            const router = useRouter();
             return (
               <Pressable onPress={() => router.push('/settings')}>
                 {({ pressed }) => (
                   <Ionicons
                     name="person-circle-outline"
                     size={25}
-                    color={theme.COLORS.gray} // Use theme color
+                    color={theme.COLORS.gray} // Use theme from hook
                     style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
@@ -76,26 +79,27 @@ export default function TabLayout() { // Renamed function for clarity
           },
         }}
       />
+      {/* Other Tabs.Screen components... */}
       <Tabs.Screen
-        name="transacoes" // Corresponds to app/(tabs)/transacoes.tsx
+        name="transacoes"
         options={{
           title: "Transações",
         }}
       />
       <Tabs.Screen
-        name="debitos" // Corresponds to app/(tabs)/debitos.tsx
+        name="debitos"
         options={{
           title: "Débitos",
         }}
       />
       <Tabs.Screen
-        name="metas" // Corresponds to app/(tabs)/metas.tsx
+        name="metas"
         options={{
           title: "Metas",
         }}
       />
       <Tabs.Screen
-        name="orcamentos" // Corresponds to app/(tabs)/orcamentos.tsx
+        name="orcamentos"
         options={{
           title: "Orçamentos",
         }}
