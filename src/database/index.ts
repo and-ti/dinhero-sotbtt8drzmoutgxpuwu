@@ -22,6 +22,17 @@ export interface Family {
   name: string;
 }
 
+// Define Budget interface
+export interface Budget {
+  id: number;
+  name: string;
+  amount: number;
+  category: string;
+  startDate: string;
+  endDate: string;
+  family_id: number;
+}
+
 // Open the database connection
 export const getDBConnection = (): SQLiteDatabase => {
   return openDatabaseSync('dinhero.db');
@@ -33,6 +44,7 @@ export const initDatabase = async (db: SQLiteDatabase): Promise<void> => {
   await db.execAsync('CREATE TABLE IF NOT EXISTS families (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);');
   await db.execAsync('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT UNIQUE, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, family_id INTEGER, FOREIGN KEY (family_id) REFERENCES families(id));');
   await db.execAsync('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);');
+  await db.execAsync('CREATE TABLE IF NOT EXISTS budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, amount REAL NOT NULL, category TEXT NOT NULL, startDate TEXT NOT NULL, endDate TEXT NOT NULL, family_id INTEGER, FOREIGN KEY (family_id) REFERENCES families(id));');
 };
 
 // Add an item and return its new ID
@@ -117,4 +129,28 @@ export const updateUserFamilyId = async (db: SQLiteDatabase, userId: number, fam
 export const getUsersByFamilyId = async (db: SQLiteDatabase, familyId: number): Promise<User[]> => {
   const users = await db.getAllAsync<User>('SELECT * FROM users WHERE family_id = ?;', familyId);
   return users;
+};
+
+// Add a budget and return its new ID
+export const addBudget = async (db: SQLiteDatabase, name: string, amount: number, category: string, startDate: string, endDate: string, family_id: number): Promise<number> => {
+  const result = await db.runAsync('INSERT INTO budgets (name, amount, category, startDate, endDate, family_id) VALUES (?, ?, ?, ?, ?, ?);', name, amount, category, startDate, endDate, family_id);
+  return result.lastInsertRowId;
+};
+
+// Retrieve all budgets for a given family ID
+export const getBudgetsByFamilyId = async (db: SQLiteDatabase, family_id: number): Promise<Budget[]> => {
+  const budgets = await db.getAllAsync<Budget>('SELECT * FROM budgets WHERE family_id = ? ORDER BY id DESC;', family_id);
+  return budgets;
+};
+
+// Update an existing budget and return the number of affected rows
+export const updateBudget = async (db: SQLiteDatabase, id: number, name: string, amount: number, category: string, startDate: string, endDate: string): Promise<number> => {
+  const result = await db.runAsync('UPDATE budgets SET name = ?, amount = ?, category = ?, startDate = ?, endDate = ? WHERE id = ?;', name, amount, category, startDate, endDate, id);
+  return result.changes;
+};
+
+// Delete a budget and return the number of affected rows
+export const deleteBudget = async (db: SQLiteDatabase, id: number): Promise<number> => {
+  const result = await db.runAsync('DELETE FROM budgets WHERE id = ?;', id);
+  return result.changes;
 };
