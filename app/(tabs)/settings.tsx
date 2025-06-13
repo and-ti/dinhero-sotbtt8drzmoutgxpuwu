@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert } from 'react-native';
+import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert, Switch } from 'react-native';
 import * as SQLite from 'expo-sqlite';
+import { useTheme } from '../../src/context/ThemeContext';
 import {
   getDBConnection,
   initDatabase,
@@ -15,6 +16,8 @@ import {
 } from '../../src/database';
 
 export default function FamilySettingsScreen() {
+  const { theme, toggleTheme, currentMode } = useTheme();
+  const styles = getStyles(theme);
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
@@ -193,8 +196,22 @@ export default function FamilySettingsScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Family Settings</Text>
 
+      <View style={styles.themeSettingsContainer}>
+        <Text style={styles.sectionTitle}>Theme Settings</Text>
+        <View style={styles.themeSwitchRow}>
+          <Text style={styles.themeSwitchText}>Current theme: {currentMode}</Text>
+          <Switch
+            trackColor={{ false: theme.COLORS.grey, true: theme.COLORS.primary }} // These might need to be part of theme.COLORS if more granular control is needed
+            thumbColor={currentMode === 'dark' ? theme.COLORS.lightGrey : theme.COLORS.grey} // Same as above
+            ios_backgroundColor={theme.COLORS.grey} // Same as above
+            onValueChange={toggleTheme}
+            value={currentMode === 'dark'}
+          />
+        </View>
+      </View>
+
       {!currentUser ? (
-        <Text>Error: Current user not loaded. Please try again.</Text>
+        <Text style={styles.errorText}>Error: Current user not loaded. Please try again.</Text>
       ) : !family && !currentUser.family_id ? (
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Create Your Family</Text>
@@ -203,11 +220,13 @@ export default function FamilySettingsScreen() {
             placeholder="Enter Family Name"
             value={familyNameInput}
             onChangeText={setFamilyNameInput}
+            placeholderTextColor={theme.COLORS.placeholder}
           />
           <Button
             title="Create Family"
             onPress={handleCreateFamily}
-            disabled={!familyNameInput.trim() || isLoading} // Also disable if loading
+            disabled={!familyNameInput.trim() || isLoading}
+            color={theme.COLORS.primary}
           />
         </View>
       ) : family ? (
@@ -222,7 +241,7 @@ export default function FamilySettingsScreen() {
               style={styles.list}
             />
           ) : (
-            <Text>No members yet. You are the only member.</Text>
+            <Text style={styles.bodyText}>No members yet. You are the only member.</Text>
           )}
 
           {/* Add New Member Form */}
@@ -233,12 +252,14 @@ export default function FamilySettingsScreen() {
               placeholder="Member's Name"
               value={newMemberNameInput}
               onChangeText={setNewMemberNameInput}
+              placeholderTextColor={theme.COLORS.placeholder}
             />
             <TextInput
               style={styles.input}
               placeholder="Member's Email"
               value={newMemberEmailInput}
               onChangeText={setNewMemberEmailInput}
+              placeholderTextColor={theme.COLORS.placeholder}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -246,84 +267,114 @@ export default function FamilySettingsScreen() {
               title="Add Member"
               onPress={handleAddNewMember}
               disabled={!newMemberNameInput.trim() || !newMemberEmailInput.trim() || isLoading}
+              color={theme.COLORS.primary}
             />
           </View>
         </View>
       ) : (
-        // This case might occur if family_id exists on user but family fetch failed or is in progress
-        // Or if family was just created and state is updating.
-        <Text>Loading family details...</Text>
+        <Text style={styles.bodyText}>Loading family details...</Text>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f7f7f7', // Light grey background
+    backgroundColor: theme.COLORS.background,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333', // Darker grey for title
     textAlign: 'center',
     marginBottom: 25,
+    color: theme.COLORS.text,
   },
   loadingText: {
     fontSize: 18,
-    color: '#555',
     textAlign: 'center',
+    color: theme.COLORS.text,
   },
   sectionContainer: {
-    backgroundColor: '#fff', // White cards for sections
     borderRadius: 8,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#000',
+    backgroundColor: theme.COLORS.cardBackground,
+    shadowColor: theme.COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
+  // Specific container for theme settings to distinguish from other sections if needed
+  themeSettingsContainer: {
+    borderRadius: 8,
+    padding: 20,
+    marginBottom: 20,
+    backgroundColor: theme.COLORS.cardBackground,
+    shadowColor: theme.COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  themeSwitchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  themeSwitchText: {
+    color: theme.COLORS.text,
+    fontSize: 16,
+  },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: '600', // Semibold
-    color: '#444', // Slightly lighter than title
+    fontWeight: '600',
     marginBottom: 15,
+    color: theme.COLORS.text,
   },
   subheading: {
     fontSize: 18,
-    fontWeight: '500', // Medium
-    color: '#555',
+    fontWeight: '500',
     marginTop: 10,
     marginBottom: 8,
+    color: theme.COLORS.text,
   },
   addMemberContainer: {
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: theme.COLORS.borderColor,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc', // Lighter border
     borderRadius: 5,
     padding: 12,
     fontSize: 16,
     marginBottom: 15,
-    backgroundColor: '#fff', // Ensure input background is white
+    borderColor: theme.COLORS.borderColor,
+    backgroundColor: theme.COLORS.inputBackground,
+    color: theme.COLORS.text,
   },
   list: {
     marginTop: 5,
   },
   memberItem: {
     fontSize: 16,
-    color: '#333',
-    paddingVertical: 8, // Add some padding
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee', // Light separator line
+    color: theme.COLORS.text,
+    borderBottomColor: theme.COLORS.borderColor,
   },
-  // Add Button styles if needed, or rely on default react-native Button styling
+  errorText: {
+    color: theme.COLORS.error, // Assuming theme has an error color
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  bodyText: { // For general purpose text like "No members yet..."
+    color: theme.COLORS.text,
+    fontSize: 16,
+  }
 });
