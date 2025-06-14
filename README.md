@@ -2,6 +2,41 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
+## Project Status
+
+**Completed Features:**
+- User/Family management (creation, updating name, adding members) in `settings.tsx`.
+- Basic budget listing in `orcamentos.tsx`.
+- Theme (dark/light mode) switching.
+- SQLite database integration and initialization.
+
+**Partially Implemented/Placeholder Features:**
+- Dashboard: Generic DB item list, needs to be a financial overview.
+- Orçamentos (Budgets): Listing is done. Add/Edit/Delete actions are placeholders.
+- Débitos (Debts/Expenses): Placeholder screen.
+- Metas (Goals): Placeholder screen.
+- Transações (Transactions): Placeholder screen.
+
+**Missing Core Financial Features:**
+- Transaction recording (income, expenses).
+- Linking transactions to budgets.
+- Categorization of transactions.
+- Financial reporting/summaries on the dashboard.
+- Debt tracking.
+- Savings goal tracking.
+- User authentication (currently uses a hardcoded user ID).
+
+## Roadmap
+
+1.  **Enhance `orcamentos.tsx` (Budgets Screen):** Implement full CRUD functionality.
+2.  **Implement `transacoes.tsx` (Transactions Screen):** Add transaction recording, listing, editing, and deletion.
+3.  **Develop `debitos.tsx` (Debts/Expenses Screen):** Implement CRUD for debts.
+4.  **Develop `metas.tsx` (Goals Screen):** Implement CRUD for financial goals.
+5.  **Transform `dashboard.tsx` into a Financial Overview:** Display summaries and progress.
+6.  **Implement User Authentication:** Secure login/signup and session management.
+7.  **Refine Database Structure:** Define all tables and relationships, including a `categories` table.
+8.  **Add Unit and Integration Tests.**
+
 ## Get started
 
 1. Install dependencies
