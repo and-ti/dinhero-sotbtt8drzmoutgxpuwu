@@ -1,7 +1,8 @@
 // src/context/ThemeContext.tsx
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as React from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { Appearance } from 'react-native';
 import { getTheme, PaperThemeType } from '../styles/theme'; // Import PaperThemeType
 
 // Use the new PaperThemeType for our theme

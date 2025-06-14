@@ -1,21 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from "react-native"; // View might still be needed for some layout
+import type { SQLiteDatabase } from 'expo-sqlite';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from "react-native"; // View might still be needed for some layout
+import { ActivityIndicator, Card, Text as PaperText, ProgressBar } from 'react-native-paper';
 import { useTheme } from '../../src/context/ThemeContext';
-import { commonStyles } from '../../src/styles/theme'; // Keep for SPACING, BORDER_RADIUS if not using theme's directly
-import { Text as PaperText, Card, ProgressBar, ActivityIndicator, MD3Colors } from 'react-native-paper';
 import {
-  getDBConnection,
-  initDatabase,
-  getTransactionsByFamilyId,
-  getBudgetsByFamilyId,
-  getDebtsByFamilyId,
-  getGoalsByFamilyId,
-  Transaction,
   Budget,
   Debt,
+  getBudgetsByFamilyId,
+  getDBConnection,
+  getDebtsByFamilyId,
+  getGoalsByFamilyId,
+  getTransactionsByFamilyId,
   Goal,
+  initDatabase
 } from '../../src/database';
-import type { SQLiteDatabase } from 'expo-sqlite';
+import { commonStyles } from '../../src/styles/theme'; // Keep for SPACING, BORDER_RADIUS if not using theme's directly
 
 // Types remain the same
 interface MonthlySummary {
@@ -39,10 +38,6 @@ export default function DashboardScreen() {
   const [summaryData, setSummaryData] = useState<MonthlySummary | null>(null);
   const [activeBudgets, setActiveBudgets] = useState<BudgetWithSpending[]>([]);
   const [outstandingDebts, setOutstandingDebts] = useState<Debt[]>([]);
-  const [activeGoals, setActiveGoals] = useState<Goal[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDBInitialized, setIsDBInitialized] = useState(false);
-
   const [activeGoals, setActiveGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDBInitialized, setIsDBInitialized] = useState(false);
