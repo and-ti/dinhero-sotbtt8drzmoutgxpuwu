@@ -1,12 +1,11 @@
 // src/context/ThemeContext.tsx
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { Appearance } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Or expo-secure-store
-import { getTheme } from '../styles/theme'; // Import the getTheme function
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTheme, PaperThemeType } from '../styles/theme'; // Import PaperThemeType
 
-// Define the shape of the theme object provided by getTheme
-// This should match the return type of getTheme
-type Theme = ReturnType<typeof getTheme>;
+// Use the new PaperThemeType for our theme
+type Theme = PaperThemeType;
 
 interface ThemeContextType {
   theme: Theme;
@@ -15,9 +14,8 @@ interface ThemeContextType {
 }
 
 // Create the context with a default value.
-// The default theme can be light, and toggleTheme a no-op until provider is mounted.
 const ThemeContext = createContext<ThemeContextType>({
-  theme: getTheme('light'), // Default theme
+  theme: getTheme('light'), // Default theme using the updated getTheme
   toggleTheme: () => console.warn('ThemeProvider not found'),
   currentMode: 'light',
 });

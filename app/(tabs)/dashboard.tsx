@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Text, View, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, StyleSheet, ScrollView, Alert } from "react-native"; // View might still be needed for some layout
 import { useTheme } from '../../src/context/ThemeContext';
-import { commonStyles } from '../../src/styles/theme';
+import { commonStyles } from '../../src/styles/theme'; // Keep for SPACING, BORDER_RADIUS if not using theme's directly
+import { Text as PaperText, Card, ProgressBar, ActivityIndicator, MD3Colors } from 'react-native-paper';
 import {
   getDBConnection,
   initDatabase,
@@ -16,6 +17,7 @@ import {
 } from '../../src/database';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+// Types remain the same
 interface MonthlySummary {
   income: number;
   expenses: number;
@@ -26,20 +28,13 @@ interface BudgetWithSpending extends Budget {
   spentAmount: number;
 }
 
-const CustomProgressBar = ({ progress, color, height = 8 }: { progress: number, color: string, height?: number }) => {
-  const styles = getDynamicStyles(useTheme().theme); // Access theme for styles
-  return (
-    <View style={[styles.progressBarContainer, { height }]}>
-      <View style={[styles.progressBarFill, { width: `${Math.max(0, Math.min(progress * 100, 100))}%`, backgroundColor: color }]} />
-    </View>
-  );
-};
-
+// CustomProgressBar is removed, will use Paper.ProgressBar
 
 export default function DashboardScreen() {
-  const { theme } = useTheme();
+  const { theme } = useTheme(); // theme is now PaperThemeType
   const styles = getDynamicStyles(theme);
 
+  // State hooks remain the same
   const [db, setDb] = useState<SQLiteDatabase | null>(null);
   const [summaryData, setSummaryData] = useState<MonthlySummary | null>(null);
   const [activeBudgets, setActiveBudgets] = useState<BudgetWithSpending[]>([]);
@@ -48,13 +43,20 @@ export default function DashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDBInitialized, setIsDBInitialized] = useState(false);
 
+  const [activeGoals, setActiveGoals] = useState<Goal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDBInitialized, setIsDBInitialized] = useState(false);
+
+  // useEffect and loadDashboardData logic remain largely the same,
+  // just ensure Alert and console.error are handled if desired (they are standard).
+  // The data fetching logic itself is not changing.
+
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
       try {
         const connection = getDBConnection();
         setDb(connection);
-        // It's okay to call initDatabase multiple times, tables are created with IF NOT EXISTS
         await initDatabase(connection);
         setIsDBInitialized(true);
         if (connection) {
@@ -75,20 +77,14 @@ export default function DashboardScreen() {
     setIsLoading(true);
     try {
       const familyId = 1; // TODO: Replace with dynamic family ID
-
-      // 1. Income/Expense Summary (Current Month)
       const today = new Date();
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
       const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
-
-      // For simplicity, fetching all transactions and filtering in JS.
-      // Ideally, filter by date in SQL if getTransactionsByFamilyId supports it or add a new DB function.
-      const allTransactions = await getTransactionsByFamilyId(currentDb, familyId, 1000, 0); // Fetch a large number for now
+      const allTransactions = await getTransactionsByFamilyId(currentDb, familyId, 1000, 0);
 
       let income = 0;
       let expenses = 0;
       allTransactions.forEach(t => {
-        // Basic check if transaction_date is within the current month
         if (t.transaction_date >= firstDayOfMonth && t.transaction_date <= lastDayOfMonth) {
             if (t.type === 'income') income += t.amount;
             if (t.type === 'expense') expenses += t.amount;
@@ -96,40 +92,13 @@ export default function DashboardScreen() {
       });
       setSummaryData({ income, expenses, net: income - expenses });
 
-      // 2. Budget Progress
       const budgets = await getBudgetsByFamilyId(currentDb, familyId);
-      const budgetsWithSpending: BudgetWithSpending[] = [];
-      for (const budget of budgets) {
-        // TODO: This is a simplified calculation. For accuracy, transactions should be linked to budgets (budget_id)
-        // or filter transactions by category AND date range of the budget.
-        let spentAmount = 0;
-        allTransactions.forEach(t => {
-          if (t.category_id && t.type === 'expense') { // Assuming budget 'category' matches transaction category name for now
-             // This is a very rough match. Ideally budget.category would be an ID or a more robust matching logic.
-             // And that transactions have a category name that can be matched to budget.category string.
-             // For now, we'll assume budget.category is a string that we hope matches some transaction categories.
-             // This part needs significant improvement for real-world use.
-             // A proper solution would involve linking transactions to budgets directly (budget_id)
-             // or having a categories table that both budgets and transactions reference.
-             // The current Budget interface has `category: string`, which is not ideal.
-             // For this example, we'll simulate some spending if category names match (very loosely).
-             // This part will likely show 0 spending for most budgets unless category names align perfectly
-             // with categories used in transactions AND transactions have categories assigned.
-             // A better approach would be to iterate through transactions and sum up amounts for categories defined in budgets.
-          }
-        });
-        // For demonstration, let's assume we just display the budget without accurate spending for now
-        // as the current structure doesn't easily support it without major assumptions or changes elsewhere.
-        budgetsWithSpending.push({ ...budget, spentAmount: 0 }); // Placeholder spentAmount
-      }
+      const budgetsWithSpending: BudgetWithSpending[] = budgets.map(b => ({...b, spentAmount: 0})); // Placeholder
       setActiveBudgets(budgetsWithSpending);
 
-
-      // 3. Outstanding Debts
       const unpaidDebts = await getDebtsByFamilyId(currentDb, familyId, 'unpaid');
       setOutstandingDebts(unpaidDebts);
 
-      // 4. Active Goals
       const activeGoalsList = await getGoalsByFamilyId(currentDb, familyId, 'active');
       setActiveGoals(activeGoalsList);
 
@@ -141,153 +110,165 @@ export default function DashboardScreen() {
     }
   }, []);
 
+
   if (!isDBInitialized) {
-    return <View style={styles.centered}><Text style={styles.text}>Inicializando banco de dados...</Text></View>;
+    return <View style={styles.centered}><ActivityIndicator animating={true} color={theme.colors.primary} size="large" /><PaperText style={styles.loadingText}>Inicializando banco de dados...</PaperText></View>;
   }
   if (isLoading) {
-    return <View style={styles.centered}><Text style={styles.text}>Carregando dashboard...</Text></View>;
+    return <View style={styles.centered}><ActivityIndicator animating={true} color={theme.colors.primary} size="large" /><PaperText style={styles.loadingText}>Carregando dashboard...</PaperText></View>;
   }
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.headerTitle}>Painel Financeiro</Text>
+      <PaperText variant="headlineMedium" style={styles.headerTitle}>Painel Financeiro</PaperText>
 
       {/* Resumo Mensal */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Resumo Mensal</Text>
-        {summaryData ? (
-          <>
-            <Text style={[styles.summaryText, styles.incomeText]}>Receitas: R$ {summaryData.income.toFixed(2)}</Text>
-            <Text style={[styles.summaryText, styles.expenseText]}>Despesas: R$ {summaryData.expenses.toFixed(2)}</Text>
-            <Text style={[styles.summaryText, styles.netText]}>Saldo: R$ {summaryData.net.toFixed(2)}</Text>
-          </>
-        ) : <Text style={styles.text}>Calculando resumo...</Text>}
-      </View>
+      <Card style={styles.sectionCard} elevation={1}>
+        <Card.Content>
+          <PaperText variant="titleMedium" style={styles.sectionTitle}>Resumo Mensal</PaperText>
+          {summaryData ? (
+            <>
+              <PaperText style={[styles.summaryText, styles.incomeText]}>Receitas: R$ {summaryData.income.toFixed(2)}</PaperText>
+              <PaperText style={[styles.summaryText, styles.expenseText]}>Despesas: R$ {summaryData.expenses.toFixed(2)}</PaperText>
+              <PaperText style={[styles.summaryText, styles.netText]}>Saldo: R$ {summaryData.net.toFixed(2)}</PaperText>
+            </>
+          ) : <PaperText style={styles.text}>Calculando resumo...</PaperText>}
+        </Card.Content>
+      </Card>
 
       {/* Orçamentos Ativos */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Orçamentos Ativos</Text>
-        {activeBudgets.length > 0 ? activeBudgets.map(budget => {
-          const progress = budget.amount > 0 ? Math.min(budget.spentAmount / budget.amount, 1) : 0;
-          return (
-            <View key={budget.id} style={styles.listItem}>
-              <Text style={styles.itemTextBold}>{budget.name}</Text>
-              <Text style={styles.itemText}>Gasto: R$ {budget.spentAmount.toFixed(2)} de R$ {budget.amount.toFixed(2)}</Text>
-              <CustomProgressBar progress={progress} color={theme.COLORS.primary} />
-            </View>
-          );
-        }) : <Text style={styles.text}>Nenhum orçamento ativo.</Text>}
-      </View>
+      <Card style={styles.sectionCard} elevation={1}>
+        <Card.Content>
+          <PaperText variant="titleMedium" style={styles.sectionTitle}>Orçamentos Ativos</PaperText>
+          {activeBudgets.length > 0 ? activeBudgets.map(budget => {
+            const progress = budget.amount > 0 ? Math.min(budget.spentAmount / budget.amount, 1) : 0;
+            return (
+              <View key={budget.id} style={styles.listItem}>
+                <PaperText variant="labelLarge" style={styles.itemTextBold}>{budget.name}</PaperText>
+                <PaperText style={styles.itemText}>Gasto: R$ {budget.spentAmount.toFixed(2)} de R$ {budget.amount.toFixed(2)}</PaperText>
+                <ProgressBar progress={progress} color={theme.colors.primary} style={styles.progressBar} />
+              </View>
+            );
+          }) : <PaperText style={styles.text}>Nenhum orçamento ativo.</PaperText>}
+        </Card.Content>
+      </Card>
 
       {/* Dívidas Pendentes */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Dívidas Pendentes</Text>
-        {outstandingDebts.length > 0 ? outstandingDebts.map(debt => (
-          <View key={debt.id} style={styles.listItem}>
-            <Text style={styles.itemTextBold}>{debt.description}</Text>
-            <Text style={styles.itemText}>Valor: R$ {debt.amount.toFixed(2)} {debt.due_date ? `- Vence: ${new Date(debt.due_date+"T00:00:00").toLocaleDateString()}` : ''}</Text>
-          </View>
-        )) : <Text style={styles.text}>Nenhuma dívida pendente. 🎉</Text>}
-      </View>
+      <Card style={styles.sectionCard} elevation={1}>
+        <Card.Content>
+          <PaperText variant="titleMedium" style={styles.sectionTitle}>Dívidas Pendentes</PaperText>
+          {outstandingDebts.length > 0 ? outstandingDebts.map(debt => (
+            <View key={debt.id} style={styles.listItem}>
+              <PaperText variant="labelLarge" style={styles.itemTextBold}>{debt.description}</PaperText>
+              <PaperText style={styles.itemText}>Valor: R$ {debt.amount.toFixed(2)} {debt.due_date ? `- Vence: ${new Date(debt.due_date+"T00:00:00").toLocaleDateString()}` : ''}</PaperText>
+            </View>
+          )) : <PaperText style={styles.text}>Nenhuma dívida pendente. 🎉</PaperText>}
+        </Card.Content>
+      </Card>
 
       {/* Metas em Andamento */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Metas em Andamento</Text>
-        {activeGoals.length > 0 ? activeGoals.map(goal => {
-          const progress = goal.target_amount > 0 ? Math.min(goal.current_amount / goal.target_amount, 1) : 0;
-          return (
-            <View key={goal.id} style={styles.listItem}>
-              <Text style={styles.itemTextBold}>{goal.name}</Text>
-              <Text style={styles.itemText}>Progresso: R$ {goal.current_amount.toFixed(2)} de R$ {goal.target_amount.toFixed(2)}</Text>
-              <CustomProgressBar progress={progress} color={theme.COLORS.accent} />
-            </View>
-          );
-        }) : <Text style={styles.text}>Nenhuma meta em andamento.</Text>}
-      </View>
+      <Card style={styles.sectionCard} elevation={1}>
+        <Card.Content>
+          <PaperText variant="titleMedium" style={styles.sectionTitle}>Metas em Andamento</PaperText>
+          {activeGoals.length > 0 ? activeGoals.map(goal => {
+            const progress = goal.target_amount > 0 ? Math.min(goal.current_amount / goal.target_amount, 1) : 0;
+            return (
+              <View key={goal.id} style={styles.listItem}>
+                <PaperText variant="labelLarge" style={styles.itemTextBold}>{goal.name}</PaperText>
+                <PaperText style={styles.itemText}>Progresso: R$ {goal.current_amount.toFixed(2)} de R$ {goal.target_amount.toFixed(2)}</PaperText>
+                <ProgressBar progress={progress} color={theme.colors.secondary} style={styles.progressBar} />
+              </View>
+            );
+          }) : <PaperText style={styles.text}>Nenhuma meta em andamento.</PaperText>}
+        </Card.Content>
+      </Card>
     </ScrollView>
   );
 }
 
-// Moved getDynamicStyles outside the component and passed theme to it
 const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.COLORS.background,
+    backgroundColor: theme.colors.background,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.COLORS.background,
+    backgroundColor: theme.colors.background,
     padding: commonStyles.SPACING.medium,
+  },
+  loadingText: { // For text next to ActivityIndicator
+    marginTop: commonStyles.SPACING.small,
+    color: theme.colors.onBackground,
+    fontSize: commonStyles.FONTS.sizes.medium,
   },
   headerTitle: {
-    fontSize: commonStyles.FONTS.sizes.xlarge,
-    fontFamily: commonStyles.FONTS.bold,
-    color: theme.COLORS.primary,
+    // fontSize: commonStyles.FONTS.sizes.xlarge, // Handled by variant
+    // fontFamily: commonStyles.FONTS.bold, // Handled by variant
+    color: theme.colors.primary,
     textAlign: 'center',
     marginVertical: commonStyles.SPACING.medium,
+    // fontWeight: 'bold', // If variant doesn't provide enough weight
   },
   sectionCard: {
-    backgroundColor: theme.COLORS.surface,
-    borderRadius: commonStyles.BORDER_RADIUS.medium,
-    padding: commonStyles.SPACING.medium,
+    // backgroundColor: theme.colors.surface, // Handled by Card
+    // borderRadius: theme.roundness, // Handled by Card theme
+    padding: commonStyles.SPACING.small, // Adjusted padding for Card.Content
     marginBottom: commonStyles.SPACING.medium,
     marginHorizontal: commonStyles.SPACING.medium,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    // elevation: 1, // Set on Card component directly
   },
   sectionTitle: {
-    fontSize: commonStyles.FONTS.sizes.large,
-    fontFamily: commonStyles.FONTS.bold,
-    color: theme.COLORS.text,
+    // fontSize: commonStyles.FONTS.sizes.large, // Handled by variant
+    // fontFamily: commonStyles.FONTS.bold, // Handled by variant
+    color: theme.colors.onSurface, // Text on Card
     marginBottom: commonStyles.SPACING.small,
   },
   summaryText: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.COLORS.text,
-    marginBottom: commonStyles.SPACING.xxsmall,
+    // fontFamily: commonStyles.FONTS.regular, // Handled by PaperText default or variant
+    // fontSize: commonStyles.FONTS.sizes.medium, // Handled by PaperText default or variant
+    color: theme.colors.onSurface, // Text on Card
+    marginBottom: commonStyles.SPACING.xxsmall || 4, // Ensure xxsmall is defined
   },
-  incomeText: { color: theme.COLORS.success },
-  expenseText: { color: theme.COLORS.error },
-  netText: { fontFamily: commonStyles.FONTS.bold, marginTop: commonStyles.SPACING.xsmall },
+  incomeText: { color: theme.colors.tertiary }, // Assuming tertiary is a green-like color in your theme
+  expenseText: { color: theme.colors.error },
+  netText: {
+    // fontFamily: commonStyles.FONTS.bold, // Use PaperText variant or fontWeight style
+    fontWeight: 'bold',
+    marginTop: commonStyles.SPACING.xsmall || 6, // Ensure xsmall is defined
+    color: theme.colors.onSurface,
+  },
   listItem: {
     marginBottom: commonStyles.SPACING.small,
     paddingBottom: commonStyles.SPACING.small,
     borderBottomWidth: 1,
-    borderBottomColor: theme.COLORS.borderMuted,
+    borderBottomColor: theme.colors.outlineVariant, // Softer border
   },
   itemText: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.COLORS.textMuted,
+    // fontFamily: commonStyles.FONTS.regular,
+    // fontSize: commonStyles.FONTS.sizes.small,
+    color: theme.colors.onSurfaceVariant, // Muted text on Card
   },
   itemTextBold: {
-    fontFamily: commonStyles.FONTS.medium,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.COLORS.text,
-    marginBottom: commonStyles.SPACING.xxsmall,
+    // fontFamily: commonStyles.FONTS.medium, // Handled by variant
+    // fontSize: commonStyles.FONTS.sizes.small, // Handled by variant
+    color: theme.colors.onSurface, // Emphasized text on Card
+    marginBottom: commonStyles.SPACING.xxsmall || 4,
   },
-  text: { // General text style for messages like "No data"
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.COLORS.textMuted,
+  text: {
+    // fontFamily: commonStyles.FONTS.regular,
+    // fontSize: commonStyles.FONTS.sizes.small,
+    color: theme.colors.onSurfaceVariant, // For placeholder texts like "No data"
     textAlign: 'center',
     paddingVertical: commonStyles.SPACING.small,
   },
-  progressBarContainer: {
-    backgroundColor: theme.COLORS.border,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    overflow: 'hidden',
-    marginTop: commonStyles.SPACING.xxsmall,
-    marginBottom: commonStyles.SPACING.xsmall,
+  progressBar: { // Renamed from progressBarContainer
+    height: 8, // Default height or adjust as needed
+    borderRadius: theme.roundness, // Use theme's roundness
+    marginTop: commonStyles.SPACING.xxsmall || 4,
+    marginBottom: commonStyles.SPACING.xsmall || 6,
+    backgroundColor: theme.colors.surfaceVariant, // Background for the track
   },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-  },
+  // progressBarFill is no longer needed as ProgressBar handles its own fill
 });
