@@ -1,35 +1,68 @@
-import { Text, View, StyleSheet, TextInput, Button, FlatList, Alert } from "react-native";
-import React, { useEffect, useState } from 'react';
-import * as SQLite from 'expo-sqlite';
-import { getDBConnection, initDatabase, addItem, getAllItems } from '../../src/database'; // Adjusted path
-// import theme from '../../src/styles/theme'; // REMOVE THIS
-import { useTheme } from '../../src/context/ThemeContext'; // ADD THIS
-import { commonStyles } from '../../src/styles/theme'; // Import commonStyles
+import React, { useState, useEffect, useCallback } from 'react';
+import { Text, View, StyleSheet, ScrollView, Alert } from "react-native";
+import { useTheme } from '../../src/context/ThemeContext';
+import { commonStyles } from '../../src/styles/theme';
+import {
+  getDBConnection,
+  initDatabase,
+  getTransactionsByFamilyId,
+  getBudgetsByFamilyId,
+  getDebtsByFamilyId,
+  getGoalsByFamilyId,
+  Transaction,
+  Budget,
+  Debt,
+  Goal,
+} from '../../src/database';
+import type { SQLiteDatabase } from 'expo-sqlite';
 
-interface Item {
-  id: number;
-  name: string;
+interface MonthlySummary {
+  income: number;
+  expenses: number;
+  net: number;
 }
 
-export default function DashboardScreen() {
-  const { theme } = useTheme(); // ADD THIS
-  const styles = getDynamicStyles(theme); // ADD THIS
+interface BudgetWithSpending extends Budget {
+  spentAmount: number;
+}
 
-  const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
-  const [items, setItems] = useState<Item[]>([]);
-  const [newItemName, setNewItemName] = useState('');
+const CustomProgressBar = ({ progress, color, height = 8 }: { progress: number, color: string, height?: number }) => {
+  const styles = getDynamicStyles(useTheme().theme); // Access theme for styles
+  return (
+    <View style={[styles.progressBarContainer, { height }]}>
+      <View style={[styles.progressBarFill, { width: `${Math.max(0, Math.min(progress * 100, 100))}%`, backgroundColor: color }]} />
+    </View>
+  );
+};
+
+
+export default function DashboardScreen() {
+  const { theme } = useTheme();
+  const styles = getDynamicStyles(theme);
+
+  const [db, setDb] = useState<SQLiteDatabase | null>(null);
+  const [summaryData, setSummaryData] = useState<MonthlySummary | null>(null);
+  const [activeBudgets, setActiveBudgets] = useState<BudgetWithSpending[]>([]);
+  const [outstandingDebts, setOutstandingDebts] = useState<Debt[]>([]);
+  const [activeGoals, setActiveGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDBInitialized, setIsDBInitialized] = useState(false);
 
   useEffect(() => {
     const initialize = async () => {
+      setIsLoading(true);
       try {
         const connection = getDBConnection();
         setDb(connection);
+        // It's okay to call initDatabase multiple times, tables are created with IF NOT EXISTS
         await initDatabase(connection);
-        await fetchItems(connection);
+        setIsDBInitialized(true);
+        if (connection) {
+          await loadDashboardData(connection);
+        }
       } catch (error) {
-        console.error("Initialization error", error);
-        Alert.alert("Error", "Failed to initialize database.");
+        console.error("Dashboard Initialization error:", error);
+        Alert.alert("Erro", "Falha ao inicializar o banco de dados para o dashboard.");
       } finally {
         setIsLoading(false);
       }
@@ -37,79 +70,148 @@ export default function DashboardScreen() {
     initialize();
   }, []);
 
-  const fetchItems = async (database: SQLite.SQLiteDatabase) => {
-    if (!database) return;
+  const loadDashboardData = useCallback(async (currentDb: SQLiteDatabase) => {
+    if (!currentDb) return;
+    setIsLoading(true);
     try {
-      const fetchedItems = await getAllItems(database);
-      setItems(fetchedItems);
-    } catch (error) {
-      console.error("Error fetching items", error);
-      Alert.alert("Error", "Failed to fetch items.");
-    }
-  };
+      const familyId = 1; // TODO: Replace with dynamic family ID
 
-  const handleAddItem = async () => {
-    if (!newItemName.trim()) {
-      Alert.alert("Validation", "Item name cannot be empty.");
-      return;
-    }
-    if (!db) {
-      Alert.alert("Error", "Database not connected.");
-      return;
-    }
-    try {
-      await addItem(db, newItemName);
-      setNewItemName('');
-      await fetchItems(db); // Refresh items after adding
-    } catch (error) {
-      console.error("Error adding item", error);
-      Alert.alert("Error", "Failed to add item.");
-    }
-  };
+      // 1. Income/Expense Summary (Current Month)
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+      const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
 
+      // For simplicity, fetching all transactions and filtering in JS.
+      // Ideally, filter by date in SQL if getTransactionsByFamilyId supports it or add a new DB function.
+      const allTransactions = await getTransactionsByFamilyId(currentDb, familyId, 1000, 0); // Fetch a large number for now
+
+      let income = 0;
+      let expenses = 0;
+      allTransactions.forEach(t => {
+        // Basic check if transaction_date is within the current month
+        if (t.transaction_date >= firstDayOfMonth && t.transaction_date <= lastDayOfMonth) {
+            if (t.type === 'income') income += t.amount;
+            if (t.type === 'expense') expenses += t.amount;
+        }
+      });
+      setSummaryData({ income, expenses, net: income - expenses });
+
+      // 2. Budget Progress
+      const budgets = await getBudgetsByFamilyId(currentDb, familyId);
+      const budgetsWithSpending: BudgetWithSpending[] = [];
+      for (const budget of budgets) {
+        // TODO: This is a simplified calculation. For accuracy, transactions should be linked to budgets (budget_id)
+        // or filter transactions by category AND date range of the budget.
+        let spentAmount = 0;
+        allTransactions.forEach(t => {
+          if (t.category_id && t.type === 'expense') { // Assuming budget 'category' matches transaction category name for now
+             // This is a very rough match. Ideally budget.category would be an ID or a more robust matching logic.
+             // And that transactions have a category name that can be matched to budget.category string.
+             // For now, we'll assume budget.category is a string that we hope matches some transaction categories.
+             // This part needs significant improvement for real-world use.
+             // A proper solution would involve linking transactions to budgets directly (budget_id)
+             // or having a categories table that both budgets and transactions reference.
+             // The current Budget interface has `category: string`, which is not ideal.
+             // For this example, we'll simulate some spending if category names match (very loosely).
+             // This part will likely show 0 spending for most budgets unless category names align perfectly
+             // with categories used in transactions AND transactions have categories assigned.
+             // A better approach would be to iterate through transactions and sum up amounts for categories defined in budgets.
+          }
+        });
+        // For demonstration, let's assume we just display the budget without accurate spending for now
+        // as the current structure doesn't easily support it without major assumptions or changes elsewhere.
+        budgetsWithSpending.push({ ...budget, spentAmount: 0 }); // Placeholder spentAmount
+      }
+      setActiveBudgets(budgetsWithSpending);
+
+
+      // 3. Outstanding Debts
+      const unpaidDebts = await getDebtsByFamilyId(currentDb, familyId, 'unpaid');
+      setOutstandingDebts(unpaidDebts);
+
+      // 4. Active Goals
+      const activeGoalsList = await getGoalsByFamilyId(currentDb, familyId, 'active');
+      setActiveGoals(activeGoalsList);
+
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+      Alert.alert("Erro", "Falha ao carregar dados do dashboard.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  if (!isDBInitialized) {
+    return <View style={styles.centered}><Text style={styles.text}>Inicializando banco de dados...</Text></View>;
+  }
   if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.loadingText}>Loading database...</Text>
-      </View>
-    );
+    return <View style={styles.centered}><Text style={styles.text}>Carregando dashboard...</Text></View>;
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>SQLite Demo</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.headerTitle}>Painel Financeiro</Text>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter item name"
-          value={newItemName}
-          onChangeText={setNewItemName}
-          placeholderTextColor={theme.COLORS.subtleText}
-        />
-        <Button title="Add Item" onPress={handleAddItem} color={theme.COLORS.primary} />
+      {/* Resumo Mensal */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Resumo Mensal</Text>
+        {summaryData ? (
+          <>
+            <Text style={[styles.summaryText, styles.incomeText]}>Receitas: R$ {summaryData.income.toFixed(2)}</Text>
+            <Text style={[styles.summaryText, styles.expenseText]}>Despesas: R$ {summaryData.expenses.toFixed(2)}</Text>
+            <Text style={[styles.summaryText, styles.netText]}>Saldo: R$ {summaryData.net.toFixed(2)}</Text>
+          </>
+        ) : <Text style={styles.text}>Calculando resumo...</Text>}
       </View>
 
-      <Text style={styles.subtitle}>Items:</Text>
-      <FlatList
-        data={items}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.itemContainer}>
-            <Text style={styles.itemText}>{item.id}: {item.name}</Text>
+      {/* Orçamentos Ativos */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Orçamentos Ativos</Text>
+        {activeBudgets.length > 0 ? activeBudgets.map(budget => {
+          const progress = budget.amount > 0 ? Math.min(budget.spentAmount / budget.amount, 1) : 0;
+          return (
+            <View key={budget.id} style={styles.listItem}>
+              <Text style={styles.itemTextBold}>{budget.name}</Text>
+              <Text style={styles.itemText}>Gasto: R$ {budget.spentAmount.toFixed(2)} de R$ {budget.amount.toFixed(2)}</Text>
+              <CustomProgressBar progress={progress} color={theme.COLORS.primary} />
+            </View>
+          );
+        }) : <Text style={styles.text}>Nenhum orçamento ativo.</Text>}
+      </View>
+
+      {/* Dívidas Pendentes */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Dívidas Pendentes</Text>
+        {outstandingDebts.length > 0 ? outstandingDebts.map(debt => (
+          <View key={debt.id} style={styles.listItem}>
+            <Text style={styles.itemTextBold}>{debt.description}</Text>
+            <Text style={styles.itemText}>Valor: R$ {debt.amount.toFixed(2)} {debt.due_date ? `- Vence: ${new Date(debt.due_date+"T00:00:00").toLocaleDateString()}` : ''}</Text>
           </View>
-        )}
-        ListEmptyComponent={<Text style={styles.emptyListText}>No items yet. Add some!</Text>}
-        style={styles.list}
-      />
-    </View>
+        )) : <Text style={styles.text}>Nenhuma dívida pendente. 🎉</Text>}
+      </View>
+
+      {/* Metas em Andamento */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Metas em Andamento</Text>
+        {activeGoals.length > 0 ? activeGoals.map(goal => {
+          const progress = goal.target_amount > 0 ? Math.min(goal.current_amount / goal.target_amount, 1) : 0;
+          return (
+            <View key={goal.id} style={styles.listItem}>
+              <Text style={styles.itemTextBold}>{goal.name}</Text>
+              <Text style={styles.itemText}>Progresso: R$ {goal.current_amount.toFixed(2)} de R$ {goal.target_amount.toFixed(2)}</Text>
+              <CustomProgressBar progress={progress} color={theme.COLORS.accent} />
+            </View>
+          );
+        }) : <Text style={styles.text}>Nenhuma meta em andamento.</Text>}
+      </View>
+    </ScrollView>
   );
 }
 
+// Moved getDynamicStyles outside the component and passed theme to it
 const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
   container: {
     flex: 1,
-    padding: commonStyles.SPACING.medium,
     backgroundColor: theme.COLORS.background,
   },
   centered: {
@@ -117,87 +219,75 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.COLORS.background,
+    padding: commonStyles.SPACING.medium,
   },
-  loadingText: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.COLORS.subtleText,
-  },
-  title: {
+  headerTitle: {
     fontSize: commonStyles.FONTS.sizes.xlarge,
     fontFamily: commonStyles.FONTS.bold,
     color: theme.COLORS.primary,
-    marginBottom: commonStyles.SPACING.medium,
     textAlign: 'center',
+    marginVertical: commonStyles.SPACING.medium,
   },
-  subtitle: {
+  sectionCard: {
+    backgroundColor: theme.COLORS.surface,
+    borderRadius: commonStyles.BORDER_RADIUS.medium,
+    padding: commonStyles.SPACING.medium,
+    marginBottom: commonStyles.SPACING.medium,
+    marginHorizontal: commonStyles.SPACING.medium,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  sectionTitle: {
     fontSize: commonStyles.FONTS.sizes.large,
     fontFamily: commonStyles.FONTS.bold,
     color: theme.COLORS.text,
-    marginTop: commonStyles.SPACING.medium,
     marginBottom: commonStyles.SPACING.small,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    marginBottom: commonStyles.SPACING.medium,
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    height: 44,
-    borderColor: theme.COLORS.borderColor,
-    borderWidth: 1,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    paddingHorizontal: commonStyles.SPACING.small,
-    marginRight: commonStyles.SPACING.small,
+  summaryText: {
     fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.medium,
-    backgroundColor: theme.COLORS.inputBackground,
     color: theme.COLORS.text,
+    marginBottom: commonStyles.SPACING.xxsmall,
   },
-  list: {
-    flexGrow: 1,
-  },
-  itemContainer: {
-    paddingVertical: commonStyles.SPACING.small,
-    paddingHorizontal: commonStyles.SPACING.small,
-    borderBottomColor: theme.COLORS.lightGray,
-    borderBottomWidth: 1,
-    backgroundColor: theme.COLORS.cardBackground,
+  incomeText: { color: theme.COLORS.success },
+  expenseText: { color: theme.COLORS.error },
+  netText: { fontFamily: commonStyles.FONTS.bold, marginTop: commonStyles.SPACING.xsmall },
+  listItem: {
     marginBottom: commonStyles.SPACING.small,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
+    paddingBottom: commonStyles.SPACING.small,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.COLORS.borderMuted,
   },
   itemText: {
     fontFamily: commonStyles.FONTS.regular,
-    color: theme.COLORS.text,
+    fontSize: commonStyles.FONTS.sizes.small,
+    color: theme.COLORS.textMuted,
   },
-  emptyListText: {
+  itemTextBold: {
+    fontFamily: commonStyles.FONTS.medium,
+    fontSize: commonStyles.FONTS.sizes.small,
+    color: theme.COLORS.text,
+    marginBottom: commonStyles.SPACING.xxsmall,
+  },
+  text: { // General text style for messages like "No data"
     fontFamily: commonStyles.FONTS.regular,
-    color: theme.COLORS.subtleText,
+    fontSize: commonStyles.FONTS.sizes.small,
+    color: theme.COLORS.textMuted,
     textAlign: 'center',
-    marginTop: commonStyles.SPACING.medium,
-  }
+    paddingVertical: commonStyles.SPACING.small,
+  },
+  progressBarContainer: {
+    backgroundColor: theme.COLORS.border,
+    borderRadius: commonStyles.BORDER_RADIUS.small,
+    overflow: 'hidden',
+    marginTop: commonStyles.SPACING.xxsmall,
+    marginBottom: commonStyles.SPACING.xsmall,
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: commonStyles.BORDER_RADIUS.small,
+  },
 });
-
-// Note: The Button component has limited styling options.
-// For a fully themed button, a custom component using <Pressable> and <Text> would be needed.
-// For example:
-// <Pressable style={styles.button} onPress={handleAddItem}>
-//   <Text style={styles.buttonText}>Add Item</Text>
-// </Pressable>
-//
-// And in StyleSheet:
-// button: {
-//   backgroundColor: theme.COLORS.primary,
-//   paddingVertical: commonStyles.SPACING.small,
-//   paddingHorizontal: commonStyles.SPACING.medium,
-//   borderRadius: commonStyles.BORDER_RADIUS.small,
-//   alignItems: 'center',
-//   justifyContent: 'center',
-//   height: 44, // Match input height
-// },
-// buttonText: {
-//   color: theme.COLORS.white,
-//   fontFamily: commonStyles.FONTS.bold,
-//   fontSize: commonStyles.FONTS.sizes.medium,
-// }
