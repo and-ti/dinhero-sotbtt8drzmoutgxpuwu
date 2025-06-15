@@ -1,61 +1,80 @@
 // File: app/(tabs)/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
-import { Pressable, StyleSheet } from "react-native"; // Pressable might be removed if only IconButton is used
+import { StyleSheet, View, ActivityIndicator } from "react-native"; // Added View, ActivityIndicator
 import { useTheme } from '../../src/context/ThemeContext';
 import { BlurView } from 'expo-blur';
-import { IconButton } from 'react-native-paper'; // Import IconButton
+import { IconButton } from 'react-native-paper';
+
+// Define a simple loading component, can be shared or local
+const TabLoadingIndicator = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F2F2F7' }}>
+    {/* Using a default light background, assuming tabs might not have their own background initially */}
+    <ActivityIndicator size="large" />
+  </View>
+);
 
 export default function TabLayout() {
-  const { theme } = useTheme(); // theme is PaperThemeType
+  const { theme, isThemeReady } = useTheme(); // Destructure isThemeReady
+
+  if (!isThemeReady) {
+    return <TabLoadingIndicator />;
+  }
+
+  // Secondary checks for properties used directly by TabLayout
+  // These should ideally be true if isThemeReady is true.
+  if (
+    !theme.colors ||
+    typeof theme.colors.primary === 'undefined' ||
+    typeof theme.colors.onSurfaceVariant === 'undefined' ||
+    typeof theme.colors.surface === 'undefined' || // for headerStyle
+    !theme.BLUR_EFFECT ||
+    typeof theme.BLUR_EFFECT.tint === 'undefined' ||
+    !theme.FONTS ||
+    typeof theme.FONTS.bold === 'undefined' ||
+    typeof theme.FONTS.sizes === 'undefined'
+  ) {
+    console.error("TabLayout: ThemeContext reported theme as ready, but critical properties for Tabs are missing.", theme);
+    return <TabLoadingIndicator />; // Fallback to loading indicator
+  }
 
   return (
     <Tabs
       screenOptions={({ route }) => ({
-        // ... (icon logic remains the same)
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: any = 'alert-circle-outline'; // Default icon
-
-          if (route.name === "dashboard") {
-            iconName = focused ? "home" : "home-outline";
-          } else if (route.name === "transacoes") {
-            iconName = focused ? "list" : "list-outline";
-          } else if (route.name === "debitos") {
-            iconName = focused ? "card" : "card-outline";
-          } else if (route.name === "metas") {
-            iconName = focused ? "ribbon" : "ribbon-outline";
-          } else if (route.name === "orcamentos") {
-            iconName = focused ? "calculator" : "calculator-outline";
-          }
-          // Ensure Ionicons is used here, not trying to change all icons to Paper ones yet
+          let iconName: any = 'alert-circle-outline';
+          if (route.name === "dashboard") iconName = focused ? "home" : "home-outline";
+          else if (route.name === "transacoes") iconName = focused ? "list" : "list-outline";
+          else if (route.name === "debitos") iconName = focused ? "card" : "card-outline";
+          else if (route.name === "metas") iconName = focused ? "ribbon" : "ribbon-outline";
+          else if (route.name === "orcamentos") iconName = focused ? "calculator" : "calculator-outline";
           return <Ionicons name={iconName as any} size={size} color={color} />;
         },
-        tabBarActiveTintColor: theme.colors.primary, // Updated to Paper theme
-        tabBarInactiveTintColor: theme.colors.onSurfaceVariant, // Updated to Paper theme
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         tabBarStyle: {
-          backgroundColor: 'transparent', // Keeping transparent for BlurView
+          backgroundColor: 'transparent',
           position: 'absolute',
           left: 0,
           right: 0,
           bottom: 0,
-          borderTopWidth: 0, // No border for BlurView
-          elevation: 0, // No elevation for BlurView
+          borderTopWidth: 0,
+          elevation: 0,
         },
         tabBarBackground: () => (
           <BlurView
-            tint={theme.BLUR_EFFECT.tint} // This should correctly use 'light' or 'dark' from Paper theme
-            intensity={theme.BLUR_EFFECT.intensity} // Keep intensity as defined
+            tint={theme.BLUR_EFFECT.tint}
+            intensity={theme.BLUR_EFFECT.intensity}
             style={StyleSheet.absoluteFill}
           />
         ),
         headerStyle: {
-          backgroundColor: theme.colors.surface, // Updated to Paper theme (mapped from cardBackground)
+          backgroundColor: theme.colors.surface,
         },
-        headerTintColor: theme.colors.primary, // Updated to Paper theme
+        headerTintColor: theme.colors.primary,
         headerTitleStyle: {
-          fontFamily: theme.FONTS.bold, // Assuming FONTS is still in theme and valid
-          fontSize: theme.FONTS.sizes.large, // Assuming FONTS is still in theme and valid
-          // Consider using theme.fonts.titleLarge or similar if fonts are fully configured in Paper theme
+          fontFamily: theme.FONTS.bold,
+          fontSize: theme.FONTS.sizes.large,
         },
       })}
     >
@@ -64,43 +83,23 @@ export default function TabLayout() {
         options={{
           title: "Dashboard",
           headerRight: () => {
-            const router = useRouter();
+            const router = useRouter(); // Hook inside options needs to be stable or memoized if complex
             return (
               <IconButton
-                icon="account-circle-outline" // MaterialCommunityIcons equivalent
-                iconColor={theme.colors.onSurfaceVariant} // Or theme.colors.primary
+                icon="account-circle-outline"
+                iconColor={theme.colors.onSurfaceVariant}
                 size={25}
                 onPress={() => router.push('/settings')}
-                style={{ marginRight: 10 }} // Adjust margin as needed
+                style={{ marginRight: 10 }}
               />
             );
           },
         }}
       />
-      <Tabs.Screen
-        name="transacoes"
-        options={{
-          title: "Transações",
-        }}
-      />
-      <Tabs.Screen
-        name="debitos"
-        options={{
-          title: "Débitos",
-        }}
-      />
-      <Tabs.Screen
-        name="metas"
-        options={{
-          title: "Metas",
-        }}
-      />
-      <Tabs.Screen
-        name="orcamentos"
-        options={{
-          title: "Orçamentos",
-        }}
-      />
+      <Tabs.Screen name="transacoes" options={{ title: "Transações" }} />
+      <Tabs.Screen name="debitos" options={{ title: "Débitos" }} />
+      <Tabs.Screen name="metas" options={{ title: "Metas" }} />
+      <Tabs.Screen name="orcamentos" options={{ title: "Orçamentos" }} />
     </Tabs>
   );
 }
