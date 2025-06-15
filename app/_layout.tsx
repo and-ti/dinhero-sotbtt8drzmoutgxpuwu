@@ -1,13 +1,17 @@
 // File: app/_layout.tsx
-import { Stack } from "expo-router";
 import { BlurView } from 'expo-blur';
+import { Stack } from "expo-router";
 import { StyleSheet } from 'react-native';
-import { ThemeProvider, useTheme } from '../src/context/ThemeContext'; // Import ThemeProvider and useTheme
 import { PaperProvider } from 'react-native-paper'; // Import PaperProvider
+import { ThemeProvider, useTheme } from '../src/context/ThemeContext'; // Import ThemeProvider and useTheme
 
 // RootLayoutNav component to consume theme after provider is set up
 function RootLayoutNav() {
   const { theme } = useTheme(); // Now we can use the theme from context
+
+  if (!theme || !theme.colors) {
+    return null; // Or a loading indicator, or some fallback UI
+  }
 
   return (
     <PaperProvider theme={theme}>

@@ -31,6 +31,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Get system preference
   const systemColorScheme = Appearance.getColorScheme(); // 'light', 'dark', or null
   const [currentMode, setCurrentMode] = useState<'light' | 'dark'>(systemColorScheme || 'light');
+  const [isLoadingTheme, setIsLoadingTheme] = useState(true);
 
   useEffect(() => {
     const loadThemePreference = async () => {
@@ -47,6 +48,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         console.error('Failed to load theme preference:', error);
         // Fallback to system or default if loading fails
         setCurrentMode(systemColorScheme || 'light');
+      } finally {
+        setIsLoadingTheme(false);
       }
     };
     loadThemePreference();
@@ -79,6 +82,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, []);
 
   const theme = getTheme(currentMode);
+
+  if (isLoadingTheme) {
+    return null; // Or your preferred loading indicator
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, currentMode }}>
