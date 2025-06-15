@@ -1,16 +1,41 @@
 // File: app/_layout.tsx
 import { BlurView } from 'expo-blur';
 import { Stack } from "expo-router";
-import { StyleSheet } from 'react-native';
-import { PaperProvider } from 'react-native-paper'; // Import PaperProvider
-import { ThemeProvider, useTheme } from '../src/context/ThemeContext'; // Import ThemeProvider and useTheme
+import { StyleSheet, ActivityIndicator, View } from 'react-native';
+import { PaperProvider } from 'react-native-paper';
+import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 
-// RootLayoutNav component to consume theme after provider is set up
+const LoadingIndicator = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F2F2F7' }}>
+    <ActivityIndicator size="large" />
+  </View>
+);
+
 function RootLayoutNav() {
-  const { theme } = useTheme(); // Now we can use the theme from context
+  const { theme, isThemeReady } = useTheme(); // Destructure isThemeReady
 
-  if (!theme || !theme.colors) {
-    return null; // Or a loading indicator, or some fallback UI
+  // Primary check: if theme is not ready, show loading indicator.
+  if (!isThemeReady) {
+    return <LoadingIndicator />;
+  }
+
+  // Secondary check (if theme is ready): validate specific theme properties.
+  // This is an additional safeguard. In a perfect scenario, if isThemeReady is true, these should also be true.
+  if (
+    !theme || // Should be redundant if isThemeReady is true, but good for safety
+    !theme.colors ||
+    typeof theme.colors.background === 'undefined' ||
+    typeof theme.colors.primary === 'undefined' ||
+    !theme.FONTS ||
+    typeof theme.FONTS.bold === 'undefined' ||
+    typeof theme.FONTS.sizes === 'undefined' ||
+    !theme.BLUR_EFFECT ||
+    typeof theme.BLUR_EFFECT.tint === 'undefined'
+  ) {
+    // This case should ideally not be hit if isThemeReady=true means the theme is valid.
+    // Log an error or show a specific error UI if this happens, as it indicates a problem in ThemeProvider logic.
+    console.error("ThemeContext reported theme as ready, but critical properties are missing.", theme);
+    return <LoadingIndicator />; // Or a more specific error display
   }
 
   return (
@@ -18,11 +43,11 @@ function RootLayoutNav() {
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: theme.colors.background, // Use theme from context (Paper theme structure)
+            backgroundColor: theme.colors.background,
           },
-          headerTintColor: theme.colors.primary, // Use theme from context (Paper theme structure)
+          headerTintColor: theme.colors.primary,
           headerTitleStyle: {
-            fontFamily: theme.FONTS.bold, // Assuming FONTS is still available at the root of your theme
+            fontFamily: theme.FONTS.bold,
             fontSize: theme.FONTS.sizes.large,
           },
         }}
@@ -40,18 +65,15 @@ function RootLayoutNav() {
             },
             headerBackground: () => (
               <BlurView
-                tint={theme.BLUR_EFFECT.tint} // Use theme from context
+                tint={theme.BLUR_EFFECT.tint}
                 intensity={theme.BLUR_EFFECT.intensity}
                 style={StyleSheet.absoluteFill}
               />
             ),
-            headerTintColor: theme.colors.primary, // Ensure modal header icons/text also use theme (Paper theme structure)
+            headerTintColor: theme.colors.primary,
           }}
         />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        {/* index.tsx handles the initial redirect, so no Stack.Screen name="index" is needed here
-            if index.tsx only contains a Redirect. If app/index.tsx were a visible screen,
-            it would need a Stack.Screen entry. */}
       </Stack>
     </PaperProvider>
   );
