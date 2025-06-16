@@ -1,7 +1,8 @@
 // File: app/_layout.tsx
+import { DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { Stack } from "expo-router";
-import { StyleSheet, ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 
@@ -12,70 +13,52 @@ const LoadingIndicator = () => (
 );
 
 function RootLayoutNav() {
-  const { theme, isThemeReady } = useTheme(); // Destructure isThemeReady
+  const { theme, isThemeReady } = useTheme();
 
-  // Primary check: if theme is not ready, show loading indicator.
+  // Esta verificação agora funciona como esperado, pois o provider não retorna mais null.
   if (!isThemeReady) {
     return <LoadingIndicator />;
   }
 
-  // Secondary check (if theme is ready): validate specific theme properties.
-  // This is an additional safeguard. In a perfect scenario, if isThemeReady is true, these should also be true.
-  if (
-    !theme || // Should be redundant if isThemeReady is true, but good for safety
-    !theme.colors ||
-    typeof theme.colors.background === 'undefined' ||
-    typeof theme.colors.primary === 'undefined' ||
-    !theme.FONTS ||
-    typeof theme.FONTS.bold === 'undefined' ||
-    typeof theme.FONTS.sizes === 'undefined' ||
-    !theme.BLUR_EFFECT ||
-    typeof theme.BLUR_EFFECT.tint === 'undefined'
-  ) {
-    // This case should ideally not be hit if isThemeReady=true means the theme is valid.
-    // Log an error or show a specific error UI if this happens, as it indicates a problem in ThemeProvider logic.
-    console.error("ThemeContext reported theme as ready, but critical properties are missing.", theme);
-    return <LoadingIndicator />; // Or a more specific error display
-  }
+  // Cria o tema para a biblioteca de navegação
+  const navigationTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: theme.colors.background,
+      primary: theme.colors.primary,
+      text: theme.colors.primary,
+      card: theme.colors.background,
+      border: theme.colors.outline || DefaultTheme.colors.border,
+    },
+  };
 
   return (
-    <PaperProvider theme={theme}>
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: theme.colors.background,
-          },
-          headerTintColor: theme.colors.primary,
-          headerTitleStyle: {
-            fontFamily: theme.FONTS.bold,
-            fontSize: theme.FONTS.sizes.large,
-          },
-        }}
-      >
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="signup" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="settings"
-          options={{
-            title: "Configurações",
-            presentation: "modal",
-            headerTransparent: true,
-            headerStyle: {
-              backgroundColor: 'transparent',
-            },
-            headerBackground: () => (
-              <BlurView
-                tint={theme.BLUR_EFFECT.tint}
-                intensity={theme.BLUR_EFFECT.intensity}
-                style={StyleSheet.absoluteFill}
-              />
-            ),
-            headerTintColor: theme.colors.primary,
-          }}
-        />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-    </PaperProvider>
+    <NavigationThemeProvider value={navigationTheme}>
+      <PaperProvider theme={theme}>
+        <Stack>
+          {/* Suas telas */}
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="signup" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="settings"
+            options={{
+              title: "Configurações",
+              presentation: "modal",
+              headerTransparent: true,
+              headerBackground: () => (
+                <BlurView
+                  tint={theme.BLUR_EFFECT.tint}
+                  intensity={theme.BLUR_EFFECT.intensity}
+                  style={StyleSheet.absoluteFill}
+                />
+              ),
+            }}
+          />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+      </PaperProvider>
+    </NavigationThemeProvider>
   );
 }
 
