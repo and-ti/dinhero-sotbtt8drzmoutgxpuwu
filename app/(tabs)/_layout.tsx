@@ -1,10 +1,11 @@
 // File: app/(tabs)/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs, useRouter } from "expo-router";
-import { StyleSheet, View, ActivityIndicator } from "react-native"; // Added View, ActivityIndicator
-import { useTheme } from '../../src/context/ThemeContext';
 import { BlurView } from 'expo-blur';
+import { Tabs, useRouter } from "expo-router";
+import React from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native"; // Added View, ActivityIndicator
 import { IconButton } from 'react-native-paper';
+import { useTheme } from '../../src/context/ThemeContext';
 
 // Define a simple loading component, can be shared or local
 const TabLoadingIndicator = () => (

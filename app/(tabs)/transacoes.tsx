@@ -1,34 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Text,
-  View,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  Alert,
-  Switch,
-  Platform,
-} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useTheme } from '../../src/context/ThemeContext';
-import { commonStyles } from '../../src/styles/theme';
-import {
-  getDBConnection,
-  initDatabase,
-  addTransaction,
-  getTransactionsByFamilyId,
-  addCategory,
-  getCategoriesByTypeAndFamily,
-  Category,
-  Transaction,
-  User, // Assuming User might be needed for user_id context later
-  Family, // Assuming Family might be needed for family_id context later
-  updateTransaction,
-  deleteTransaction,
-} from '../../src/database';
 import type { SQLiteDatabase } from 'expo-sqlite';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { useTheme } from '../../src/context/ThemeContext';
+import {
+  addCategory,
+  addTransaction,
+  Category,
+  deleteTransaction,
+  getDBConnection,
+  getTransactionsByFamilyId,
+  initDatabase,
+  Transaction, // Assuming Family might be needed for family_id context later
+  updateTransaction
+} from '../../src/database';
+import { commonStyles } from '../../src/styles/theme';
 
 // Default categories to seed if none exist
 const DEFAULT_CATEGORIES = [

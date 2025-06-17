@@ -1,6 +1,6 @@
 // app/settings.tsx
 import React from 'react';
-import { View, Text, Switch, StyleSheet, Platform } from 'react-native';
+import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import { useTheme } from '../src/context/ThemeContext'; // Adjust path as necessary
 import { commonStyles } from '../src/styles/theme'; // For common font/spacing if needed
 

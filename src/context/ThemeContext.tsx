@@ -76,10 +76,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   };
 
-  // ❌ REMOVA a condição 'if (isLoadingTheme) { return null; }'
-  
-  // ✅ SEMPRE RENDERIZE O PROVIDER
-  // O valor de `isThemeReady` vai controlar o estado de loading nos componentes filhos.
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, currentMode, isThemeReady }}>
       {children}

@@ -2,6 +2,7 @@
 import { DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { Stack } from "expo-router";
+import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
