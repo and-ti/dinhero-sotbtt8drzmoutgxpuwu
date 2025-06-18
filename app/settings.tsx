@@ -15,9 +15,9 @@ export default function SettingsScreen() {
       <View style={styles.optionRow}>
         <Text style={styles.optionText}>Modo Escuro</Text>
         <Switch
-          trackColor={{ false: theme.COLORS.lightGray, true: theme.COLORS.primary }}
-          thumbColor={Platform.OS === 'android' ? theme.COLORS.white : ''} // Android thumb color often white
-          ios_backgroundColor={theme.COLORS.lightGray} // Background of the track for iOS
+          trackColor={{ false: theme.colors.customLightGray, true: theme.colors.primary }}
+          thumbColor={Platform.OS === 'android' ? theme.colors.white : ''} // Android thumb color often white
+          ios_backgroundColor={theme.colors.customLightGray} // Background of the track for iOS
           onValueChange={toggleTheme}
           value={currentMode === 'dark'}
         />
@@ -31,12 +31,12 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   container: {
     flex: 1,
     padding: commonStyles.SPACING.medium,
-    backgroundColor: theme.COLORS.background,
+    backgroundColor: theme.colors.background,
   },
   title: {
     fontSize: commonStyles.FONTS.sizes.xlarge,
     fontFamily: commonStyles.FONTS.bold,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     marginBottom: commonStyles.SPACING.large,
   },
   optionRow: {
@@ -45,11 +45,11 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     alignItems: 'center',
     paddingVertical: commonStyles.SPACING.medium,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.COLORS.borderColor,
+    borderBottomColor: theme.colors.border,
   },
   optionText: {
     fontSize: commonStyles.FONTS.sizes.medium,
     fontFamily: commonStyles.FONTS.regular,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
   },
 });

@@ -1,29 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import type { SQLiteDatabase } from 'expo-sqlite';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Text,
-  View,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  TextInput,
   Alert,
-  Switch, // For toggling status, or use a button
-  Platform,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useTheme } from '../../src/context/ThemeContext';
-import { commonStyles } from '../../src/styles/theme';
 import {
-  getDBConnection,
-  initDatabase,
   addDebt,
-  getDebtsByFamilyId,
-  updateDebt,
-  deleteDebt,
-  updateDebtStatus,
   Debt,
+  deleteDebt,
+  getDBConnection,
+  getDebtsByFamilyId,
+  initDatabase,
+  updateDebt,
+  updateDebtStatus,
 } from '../../src/database';
-import type { SQLiteDatabase } from 'expo-sqlite';
+import { commonStyles } from '../../src/styles/theme';
 
 export default function DebitosScreen() {
   const { theme } = useTheme();
@@ -274,7 +272,7 @@ export default function DebitosScreen() {
               value={description}
               onChangeText={setDescription}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.error}
             />
             <TextInput
               placeholder="Valor (ex: 150.75)"
@@ -282,21 +280,21 @@ export default function DebitosScreen() {
               onChangeText={setAmount}
               style={styles.input}
               keyboardType="numeric"
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <TextInput
               placeholder="Data de Vencimento (YYYY-MM-DD)"
               value={dueDate}
               onChangeText={setDueDate}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <TextInput
               placeholder="Credor (Opcional)"
               value={creditor}
               onChangeText={setCreditor}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity style={[styles.button, styles.modalButton]} onPress={handleSaveDebt}>
@@ -316,13 +314,13 @@ export default function DebitosScreen() {
 const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.COLORS.background,
+    backgroundColor: theme.colors.background,
     padding: commonStyles.SPACING.medium,
   },
   text: {
     fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     textAlign: 'center',
     marginBottom: commonStyles.SPACING.medium,
   },
@@ -330,7 +328,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     paddingBottom: commonStyles.SPACING.large,
   },
   debtItem: {
-    backgroundColor: theme.COLORS.surface,
+    backgroundColor: theme.colors.surface,
     padding: commonStyles.SPACING.medium,
     borderRadius: commonStyles.BORDER_RADIUS.medium,
     marginBottom: commonStyles.SPACING.medium,
@@ -341,7 +339,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     elevation: 2,
   },
   paidDebtItem: {
-    backgroundColor: theme.COLORS.surfaceMuted,
+    backgroundColor: theme.colors.surfaceVariant,
   },
   debtInfo: {
     flex: 1,
@@ -349,35 +347,35 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   debtDescription: {
     fontFamily: commonStyles.FONTS.bold,
     fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.COLORS.text,
-    marginBottom: commonStyles.SPACING.xxsmall,
+    color: theme.colors.text,
+    marginBottom: commonStyles.SPACING.small,
   },
   debtCreditor: {
     fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.xsmall,
-    color: theme.COLORS.textMuted,
-    marginBottom: commonStyles.SPACING.xxsmall,
+    fontSize: commonStyles.FONTS.sizes.small,
+    color: theme.colors.text,
+    marginBottom: commonStyles.SPACING.small,
   },
   debtDueDate: {
     fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.xsmall,
-    color: theme.COLORS.textMuted,
-    marginBottom: commonStyles.SPACING.xxsmall,
+    fontSize: commonStyles.FONTS.sizes.small,
+    color: theme.colors.text,
+    marginBottom: commonStyles.SPACING.small,
   },
   debtStatus: {
-    fontFamily: commonStyles.FONTS.medium,
-    fontSize: commonStyles.FONTS.sizes.xsmall,
-    marginTop: commonStyles.SPACING.xsmall,
+    fontFamily: commonStyles.FONTS.regular,
+    fontSize: commonStyles.FONTS.sizes.small,
+    marginTop: commonStyles.SPACING.small,
   },
   paidStatusText: {
-    color: theme.COLORS.success,
+    color: theme.colors.success,
   },
   unpaidStatusText: {
-    color: theme.COLORS.warning,
+    color: theme.colors.warning,
   },
   paidText: {
     textDecorationLine: 'line-through',
-    color: theme.COLORS.textMuted,
+    color: theme.colors.textMuted,
   },
   debtActions: {
     alignItems: 'flex-end',
@@ -389,7 +387,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     marginBottom: commonStyles.SPACING.small,
   },
   unpaidAmountText: {
-    color: theme.COLORS.error, // Explicitly color unpaid amounts
+    color: theme.colors.error, // Explicitly color unpaid amounts
   },
   statusButton: {
     paddingVertical: commonStyles.SPACING.xsmall,
@@ -400,14 +398,14 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     alignItems: 'center',
   },
   markPaidButton: {
-    backgroundColor: theme.COLORS.success,
+    backgroundColor: theme.colors.success,
   },
   markUnpaidButton: {
-    backgroundColor: theme.COLORS.warning,
+    backgroundColor: theme.colors.warning,
   },
   statusButtonText: {
-    color: theme.COLORS.white,
-    fontFamily: commonStyles.FONTS.medium,
+    color: theme.colors.white,
+    fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.xsmall,
   },
   itemActionButtonsRow: {
@@ -422,28 +420,28 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     marginLeft: commonStyles.SPACING.xsmall,
   },
   itemActionButtonText: {
-    color: theme.COLORS.white,
-    fontFamily: commonStyles.FONTS.medium,
+    color: theme.colors.white,
+    fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.xxsmall,
   },
   editItemButton: {
-    backgroundColor: theme.COLORS.primary,
+    backgroundColor: theme.colors.primary,
   },
   deleteItemButton: {
-    backgroundColor: theme.COLORS.error,
+    backgroundColor: theme.colors.error,
   },
   button: {
-    backgroundColor: theme.COLORS.primary,
+    backgroundColor: theme.colors.primary,
     padding: commonStyles.SPACING.small,
     borderRadius: commonStyles.BORDER_RADIUS.medium,
     alignItems: 'center',
   },
   addButton: {
-    backgroundColor: theme.COLORS.accent,
+    backgroundColor: theme.colors.accent,
     marginBottom: commonStyles.SPACING.medium,
   },
   buttonText: {
-    color: theme.COLORS.white,
+    color: theme.colors.white,
     fontFamily: commonStyles.FONTS.bold,
     fontSize: commonStyles.FONTS.sizes.small,
   },
@@ -455,7 +453,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   },
   modalView: {
     width: '90%',
-    backgroundColor: theme.COLORS.surface,
+    backgroundColor: theme.colors.surface,
     borderRadius: commonStyles.BORDER_RADIUS.large,
     padding: commonStyles.SPACING.large,
     shadowColor: '#000',
@@ -467,15 +465,15 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   modalTitle: {
     fontFamily: commonStyles.FONTS.bold,
     fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     marginBottom: commonStyles.SPACING.large,
     textAlign: 'center',
   },
   input: {
-    backgroundColor: theme.COLORS.inputBackground || theme.COLORS.background,
-    color: theme.COLORS.text,
+    backgroundColor: theme.colors.inputBackground || theme.colors.background,
+    color: theme.colors.text,
     borderWidth: 1,
-    borderColor: theme.COLORS.border,
+    borderColor: theme.colors.customGray,
     borderRadius: commonStyles.BORDER_RADIUS.small,
     paddingHorizontal: commonStyles.SPACING.medium,
     paddingVertical: commonStyles.SPACING.small,
@@ -494,6 +492,6 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     marginHorizontal: commonStyles.SPACING.xsmall,
   },
   cancelButton: {
-    backgroundColor: theme.COLORS.grey,
+    backgroundColor: theme.colors.customGray,
   },
 });

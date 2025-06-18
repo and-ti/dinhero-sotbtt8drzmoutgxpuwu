@@ -313,7 +313,7 @@ export default function TransacoesScreen() {
               value={description}
               onChangeText={setDescription}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <TextInput
               placeholder="Valor (ex: 50.99)"
@@ -321,23 +321,23 @@ export default function TransacoesScreen() {
               onChangeText={setAmount}
               style={styles.input}
               keyboardType="numeric"
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <TextInput
               placeholder="Data (YYYY-MM-DD)"
               value={transactionDate}
               onChangeText={setTransactionDate}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
 
             <View style={styles.switchContainer}>
               <Text style={styles.label}>Tipo:</Text>
               <Text style={[styles.typeLabel, type === 'expense' ? styles.activeTypeText : styles.inactiveTypeText]}>Despesa</Text>
               <Switch
-                trackColor={{ false: theme.COLORS.error, true: theme.COLORS.success }}
-                thumbColor={theme.COLORS.white}
-                ios_backgroundColor={theme.COLORS.error}
+                trackColor={{ false: theme.colors.error, true: theme.colors.success }}
+                thumbColor={theme.colors.white}
+                ios_backgroundColor={theme.colors.error}
                 onValueChange={() => setType(prevType => prevType === 'expense' ? 'income' : 'expense')}
                 value={type === 'income'}
               />
@@ -350,12 +350,12 @@ export default function TransacoesScreen() {
                 selectedValue={selectedCategoryId}
                 onValueChange={(itemValue) => setSelectedCategoryId(itemValue)}
                 style={styles.picker}
-                dropdownIconColor={theme.COLORS.text}
+                dropdownIconColor={theme.colors.text}
                 prompt="Selecione uma Categoria"
                 >
-                <Picker.Item label="Selecione uma categoria..." value={null} style={{color: theme.COLORS.textMuted || theme.COLORS.text}} />
+                <Picker.Item label="Selecione uma categoria..." value={null} style={{color: theme.colors.textMuted || theme.colors.text}} />
                 {filteredCategories.map((cat) => (
-                    <Picker.Item key={cat.id} label={cat.name} value={cat.id} style={{color: theme.COLORS.text}}/>
+                    <Picker.Item key={cat.id} label={cat.name} value={cat.id} style={{color: theme.colors.text}}/>
                 ))}
                 </Picker>
             </View>
@@ -384,27 +384,27 @@ export default function TransacoesScreen() {
 const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.COLORS.background,
+    backgroundColor: theme.colors.background,
     padding: commonStyles.SPACING.medium,
   },
   title: {
     fontFamily: commonStyles.FONTS.bold,
     fontSize: commonStyles.FONTS.sizes.large,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     textAlign: 'center',
     marginBottom: commonStyles.SPACING.medium,
   },
   text: {
     fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     textAlign: 'center',
   },
   listContentContainer: {
     paddingBottom: commonStyles.SPACING.large,
   },
   transactionItem: {
-    backgroundColor: theme.COLORS.surface,
+    backgroundColor: theme.colors.surface,
     padding: commonStyles.SPACING.medium,
     borderRadius: commonStyles.BORDER_RADIUS.medium,
     marginBottom: commonStyles.SPACING.medium,
@@ -422,15 +422,15 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     marginRight: commonStyles.SPACING.small,
   },
   transactionDescription: {
-    fontFamily: commonStyles.FONTS.medium,
+    fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     marginBottom: commonStyles.SPACING.xxsmall,
   },
   transactionDate: {
     fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.xsmall,
-    color: theme.COLORS.textMuted,
+    color: theme.colors.textMuted,
   },
   transactionRightContent: {
     alignItems: 'flex-end',
@@ -451,24 +451,24 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     marginLeft: commonStyles.SPACING.xsmall,
   },
   itemActionButtonText: {
-    color: theme.COLORS.white,
-    fontFamily: commonStyles.FONTS.medium,
+    color: theme.colors.white,
+    fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.xxsmall,
   },
   editButton: {
-    backgroundColor: theme.COLORS.primary,
+    backgroundColor: theme.colors.primary,
   },
   deleteButton: {
-    backgroundColor: theme.COLORS.error,
+    backgroundColor: theme.colors.error,
   },
   incomeText: {
-    color: theme.COLORS.success,
+    color: theme.colors.success,
   },
   expenseText: {
-    color: theme.COLORS.error,
+    color: theme.colors.error,
   },
   button: {
-    backgroundColor: theme.COLORS.primary,
+    backgroundColor: theme.colors.primary,
     paddingVertical: commonStyles.SPACING.small,
     paddingHorizontal: commonStyles.SPACING.medium,
     borderRadius: commonStyles.BORDER_RADIUS.medium,
@@ -477,13 +477,13 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     minHeight: 44,
   },
   addButton: {
-    backgroundColor: theme.COLORS.accent,
+    backgroundColor: theme.colors.accent,
     marginBottom: commonStyles.SPACING.medium,
     alignSelf: 'stretch',
   },
   buttonText: {
-    color: theme.COLORS.white,
-    fontFamily: commonStyles.FONTS.medium,
+    color: theme.colors.white,
+    fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.small,
   },
   // Modal Styles
@@ -495,7 +495,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   },
   modalView: {
     width: '90%',
-    backgroundColor: theme.COLORS.surface,
+    backgroundColor: theme.colors.surface,
     borderRadius: commonStyles.BORDER_RADIUS.large,
     padding: commonStyles.SPACING.large,
     alignItems: 'stretch',
@@ -508,15 +508,15 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   modalTitle: {
     fontFamily: commonStyles.FONTS.bold,
     fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     marginBottom: commonStyles.SPACING.large,
     textAlign: 'center',
   },
   input: {
-    backgroundColor: theme.COLORS.inputBackground || theme.COLORS.background,
-    color: theme.COLORS.text,
+    backgroundColor: theme.colors.inputBackground || theme.colors.background,
+    color: theme.colors.text,
     borderWidth: 1,
-    borderColor: theme.COLORS.border,
+    borderColor: theme.colors.border,
     borderRadius: commonStyles.BORDER_RADIUS.small,
     paddingHorizontal: commonStyles.SPACING.medium,
     paddingVertical: commonStyles.SPACING.small,
@@ -533,9 +533,9 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     paddingHorizontal: commonStyles.SPACING.small,
   },
   label: {
-    fontFamily: commonStyles.FONTS.medium,
+    fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     marginRight: commonStyles.SPACING.small, // Ensure some space for type switch label
   },
   typeLabel: {
@@ -544,24 +544,24 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     marginHorizontal: commonStyles.SPACING.xsmall,
   },
   activeTypeText: {
-    color: theme.COLORS.primary,
+    color: theme.colors.primary,
     fontFamily: commonStyles.FONTS.bold,
   },
   inactiveTypeText: {
-    color: theme.COLORS.textMuted,
+    color: theme.colors.textMuted,
   },
   pickerContainer: {
-    borderColor: theme.COLORS.border,
+    borderColor: theme.colors.border,
     borderWidth: 1,
     borderRadius: commonStyles.BORDER_RADIUS.small,
     marginBottom: commonStyles.SPACING.medium,
     justifyContent: 'center',
     minHeight: 50, // Increased height for picker
-    backgroundColor: theme.COLORS.inputBackground || theme.COLORS.background,
+    backgroundColor: theme.colors.inputBackground || theme.colors.background,
   },
   picker: {
     width: '100%',
-    color: theme.COLORS.text,
+    color: theme.colors.text,
   },
   modalButtonContainer: {
     flexDirection: 'row',
@@ -573,6 +573,6 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     marginHorizontal: commonStyles.SPACING.xsmall,
   },
   cancelButton: {
-    backgroundColor: theme.COLORS.grey,
+    backgroundColor: theme.colors.grey,
   },
 });

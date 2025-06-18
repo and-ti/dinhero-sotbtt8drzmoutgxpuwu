@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, FlatList, TouchableOpacity, Button, Modal, TextInput, Alert } from "react-native";
+import React, { useEffect, useState } from 'react';
+import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useTheme } from '../../src/context/ThemeContext'; // ADD THIS
-import { commonStyles } from '../../src/styles/theme'; // Import commonStyles
-import { getDBConnection, getBudgetsByFamilyId, addBudget, updateBudget, deleteBudget } from '../../src/database';
 import type { Budget } from '../../src/database'; // Import the Budget interface
+import { addBudget, deleteBudget, getBudgetsByFamilyId, getDBConnection, updateBudget } from '../../src/database';
+import { commonStyles } from '../../src/styles/theme'; // Import commonStyles
 
 export default function OrcamentosScreen() {
   const { theme } = useTheme(); // ADD THIS
@@ -179,7 +179,7 @@ export default function OrcamentosScreen() {
               value={newBudgetName}
               onChangeText={setNewBudgetName}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <TextInput
               placeholder="Valor (ex: 500.00)"
@@ -187,28 +187,28 @@ export default function OrcamentosScreen() {
               onChangeText={setNewBudgetAmount}
               style={styles.input}
               keyboardType="numeric"
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <TextInput
               placeholder="Categoria (ex: Alimentação)"
               value={newBudgetCategory}
               onChangeText={setNewBudgetCategory}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <TextInput
               placeholder="Data de Início (YYYY-MM-DD)"
               value={newBudgetStartDate}
               onChangeText={setNewBudgetStartDate}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <TextInput
               placeholder="Data de Término (YYYY-MM-DD)"
               value={newBudgetEndDate}
               onChangeText={setNewBudgetEndDate}
               style={styles.input}
-              placeholderTextColor={theme.COLORS.placeholder}
+              placeholderTextColor={theme.colors.placeholder}
             />
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity
@@ -235,27 +235,27 @@ export default function OrcamentosScreen() {
 const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.COLORS.background,
+    backgroundColor: theme.colors.background,
     padding: commonStyles.SPACING.medium,
   },
   title: {
     fontFamily: commonStyles.FONTS.bold,
     fontSize: commonStyles.FONTS.sizes.large,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     textAlign: 'center',
     marginBottom: commonStyles.SPACING.medium,
   },
   text: {
     fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     textAlign: 'center',
   },
   listContentContainer: {
     paddingBottom: commonStyles.SPACING.large,
   },
   budgetItem: {
-    backgroundColor: theme.COLORS.surface,
+    backgroundColor: theme.colors.surface,
     padding: commonStyles.SPACING.medium,
     borderRadius: commonStyles.BORDER_RADIUS.medium,
     marginBottom: commonStyles.SPACING.medium,
@@ -268,7 +268,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   budgetText: {
     fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     marginBottom: commonStyles.SPACING.xsmall,
   },
   buttonContainer: {
@@ -277,14 +277,14 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     marginTop: commonStyles.SPACING.small,
   },
   button: {
-    backgroundColor: theme.COLORS.primary,
+    backgroundColor: theme.colors.primary,
     paddingVertical: commonStyles.SPACING.xsmall,
     paddingHorizontal: commonStyles.SPACING.small,
     borderRadius: commonStyles.BORDER_RADIUS.small,
     marginLeft: commonStyles.SPACING.small,
   },
   addButton: {
-    backgroundColor: theme.COLORS.accent,
+    backgroundColor: theme.colors.accent,
     paddingVertical: commonStyles.SPACING.medium,
     paddingHorizontal: commonStyles.SPACING.medium,
     borderRadius: commonStyles.BORDER_RADIUS.medium,
@@ -293,11 +293,11 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     alignSelf: 'stretch',
   },
   deleteButton: {
-    backgroundColor: theme.COLORS.error,
+    backgroundColor: theme.colors.error,
   },
   buttonText: {
-    color: theme.COLORS.white,
-    fontFamily: commonStyles.FONTS.medium,
+    color: theme.colors.white,
+    fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.xsmall,
   },
   // Modal Styles
@@ -310,7 +310,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   },
   modalView: {
     margin: commonStyles.SPACING.medium,
-    backgroundColor: theme.COLORS.surface, // Use surface color for modal background
+    backgroundColor: theme.colors.surface, // Use surface color for modal background
     borderRadius: commonStyles.BORDER_RADIUS.large,
     padding: commonStyles.SPACING.large,
     alignItems: "center",
@@ -327,13 +327,13 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   modalTitle: {
     fontFamily: commonStyles.FONTS.bold,
     fontSize: commonStyles.FONTS.sizes.medium, // Adjusted size for modal
-    color: theme.COLORS.text,
+    color: theme.colors.text,
     marginBottom: commonStyles.SPACING.medium,
     textAlign: 'center',
   },
   input: {
     height: 50, // Increased height for better touchability
-    borderColor: theme.COLORS.border,
+    borderColor: theme.colors.border,
     borderWidth: 1,
     borderRadius: commonStyles.BORDER_RADIUS.small,
     marginBottom: commonStyles.SPACING.medium, // Consistent spacing
@@ -341,7 +341,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     width: '100%', // Full width
     fontFamily: commonStyles.FONTS.regular,
     fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.COLORS.text, // Ensure text is visible
+    color: theme.colors.text, // Ensure text is visible
   },
   modalButtonContainer: {
     flexDirection: 'row',
@@ -358,7 +358,7 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: theme.COLORS.error, // Use error color for cancel
+    backgroundColor: theme.colors.error, // Use error color for cancel
     marginLeft: commonStyles.SPACING.small,
   },
 });

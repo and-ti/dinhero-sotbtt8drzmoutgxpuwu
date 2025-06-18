@@ -1,31 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Text,
-  View,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  TextInput,
   Alert,
+  FlatList,
+  Modal,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 // Consider using ProgressBar from 'react-native-paper' in a future enhancement
 // import { ProgressBar } from 'react-native-paper';
-import { useTheme } from '../../src/context/ThemeContext';
-import { commonStyles } from '../../src/styles/theme';
-import {
-  getDBConnection,
-  initDatabase,
-  addGoal,
-  getGoalsByFamilyId,
-  updateGoal,
-  deleteGoal,
-  contributeToGoal,
-  updateGoalStatus,
-  Goal,
-} from '../../src/database';
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { useTheme } from '../../src/context/ThemeContext';
+import {
+  addGoal,
+  contributeToGoal,
+  deleteGoal,
+  getDBConnection,
+  getGoalsByFamilyId,
+  Goal,
+  initDatabase,
+  updateGoal,
+  updateGoalStatus,
+} from '../../src/database';
+import { commonStyles } from '../../src/styles/theme';
 
 export default function MetasScreen() {
   const { theme } = useTheme();
@@ -247,9 +247,9 @@ export default function MetasScreen() {
     if (isCompleted) statusText = 'Concluída';
     if (isCancelled) statusText = 'Cancelada';
 
-    let progressBarColor = theme.COLORS.primary;
-    if (isCompleted) progressBarColor = theme.COLORS.success;
-    if (isCancelled) progressBarColor = theme.COLORS.grey;
+    let progressBarColor = theme.colors.primary;
+    if (isCompleted) progressBarColor = theme.colors.success;
+    if (isCancelled) progressBarColor = theme.colors.grey;
 
 
     return (
@@ -322,9 +322,9 @@ export default function MetasScreen() {
           <ScrollView contentContainerStyle={styles.modalScrollView}>
             <View style={styles.modalView}>
               <Text style={styles.modalTitle}>{isEditing ? 'Editar Meta' : 'Adicionar Nova Meta'}</Text>
-              <TextInput placeholder="Nome da Meta" value={name} onChangeText={setName} style={styles.input} placeholderTextColor={theme.COLORS.placeholder}/>
-              <TextInput placeholder="Valor Alvo (ex: 1000.00)" value={targetAmount} onChangeText={setTargetAmount} style={styles.input} keyboardType="numeric" placeholderTextColor={theme.COLORS.placeholder}/>
-              <TextInput placeholder="Data Alvo (YYYY-MM-DD)" value={targetDate} onChangeText={setTargetDate} style={styles.input} placeholderTextColor={theme.COLORS.placeholder}/>
+              <TextInput placeholder="Nome da Meta" value={name} onChangeText={setName} style={styles.input} placeholderTextColor={theme.colors.placeholder}/>
+              <TextInput placeholder="Valor Alvo (ex: 1000.00)" value={targetAmount} onChangeText={setTargetAmount} style={styles.input} keyboardType="numeric" placeholderTextColor={theme.colors.placeholder}/>
+              <TextInput placeholder="Data Alvo (YYYY-MM-DD)" value={targetDate} onChangeText={setTargetDate} style={styles.input} placeholderTextColor={theme.colors.placeholder}/>
               <View style={styles.modalButtonContainer}>
                 <TouchableOpacity style={[styles.button, styles.modalButton]} onPress={handleSaveGoal}>
                   <Text style={styles.buttonText}>{isEditing ? 'Salvar Alterações' : 'Adicionar Meta'}</Text>
@@ -347,7 +347,7 @@ export default function MetasScreen() {
               <Text style={styles.modalTitle}>Contribuir para "{currentGoal.name}"</Text>
               <Text style={styles.modalText}>Progresso: R$ {currentGoal.current_amount.toFixed(2)} / R$ {currentGoal.target_amount.toFixed(2)}</Text>
               <Text style={styles.modalText}>Restante: R$ {(currentGoal.target_amount - currentGoal.current_amount).toFixed(2)}</Text>
-              <TextInput placeholder="Valor da Contribuição" value={contributionAmount} onChangeText={setContributionAmount} style={styles.input} keyboardType="numeric" placeholderTextColor={theme.COLORS.placeholder}/>
+              <TextInput placeholder="Valor da Contribuição" value={contributionAmount} onChangeText={setContributionAmount} style={styles.input} keyboardType="numeric" placeholderTextColor={theme.colors.placeholder}/>
               <View style={styles.modalButtonContainer}>
                 <TouchableOpacity style={[styles.button, styles.modalButton]} onPress={handleContributeToGoal}>
                   <Text style={styles.buttonText}>Confirmar Contribuição</Text>
@@ -366,39 +366,39 @@ export default function MetasScreen() {
 }
 
 const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.COLORS.background, padding: commonStyles.SPACING.medium },
-  text: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.medium, color: theme.COLORS.text, textAlign: 'center', marginBottom: commonStyles.SPACING.medium },
+  container: { flex: 1, backgroundColor: theme.colors.background, padding: commonStyles.SPACING.medium },
+  text: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.medium, color: theme.colors.text, textAlign: 'center', marginBottom: commonStyles.SPACING.medium },
   listContentContainer: { paddingBottom: commonStyles.SPACING.large },
-  goalItem: { backgroundColor: theme.COLORS.surface, padding: commonStyles.SPACING.medium, borderRadius: commonStyles.BORDER_RADIUS.medium, marginBottom: commonStyles.SPACING.medium, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
-  completedGoalItem: { backgroundColor: theme.COLORS.surfaceSuccessMuted },
-  cancelledGoalItem: { backgroundColor: theme.COLORS.surfaceMuted, opacity: 0.7 },
-  strikethroughText: { textDecorationLine: 'line-through', color: theme.COLORS.textMuted },
-  goalName: { fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.small, color: theme.COLORS.text, marginBottom: commonStyles.SPACING.xsmall },
-  progressBarContainer: { height: 12, backgroundColor: theme.COLORS.border, borderRadius: commonStyles.BORDER_RADIUS.small, overflow: 'hidden', marginVertical: commonStyles.SPACING.small },
+  goalItem: { backgroundColor: theme.colors.surface, padding: commonStyles.SPACING.medium, borderRadius: commonStyles.BORDER_RADIUS.medium, marginBottom: commonStyles.SPACING.medium, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  completedGoalItem: { backgroundColor: theme.colors.surfaceSuccessMuted },
+  cancelledGoalItem: { backgroundColor: theme.colors.surfaceMuted, opacity: 0.7 },
+  strikethroughText: { textDecorationLine: 'line-through', color: theme.colors.textMuted },
+  goalName: { fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.small, color: theme.colors.text, marginBottom: commonStyles.SPACING.xsmall },
+  progressBarContainer: { height: 12, backgroundColor: theme.colors.border, borderRadius: commonStyles.BORDER_RADIUS.small, overflow: 'hidden', marginVertical: commonStyles.SPACING.small },
   progressBarFill: { height: '100%', borderRadius: commonStyles.BORDER_RADIUS.small },
-  goalAmount: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.COLORS.textMuted, marginVertical: commonStyles.SPACING.xxsmall },
-  goalDate: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.COLORS.textMuted, marginBottom: commonStyles.SPACING.xxsmall },
-  goalStatus: { fontFamily: commonStyles.FONTS.medium, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.COLORS.text, marginTop: commonStyles.SPACING.xsmall, marginBottom: commonStyles.SPACING.small, textTransform: 'capitalize'},
+  goalAmount: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.colors.textMuted, marginVertical: commonStyles.SPACING.xxsmall },
+  goalDate: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.colors.textMuted, marginBottom: commonStyles.SPACING.xxsmall },
+  goalStatus: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.colors.text, marginTop: commonStyles.SPACING.xsmall, marginBottom: commonStyles.SPACING.small, textTransform: 'capitalize'},
   itemButtonsContainer: { flexDirection: 'row', justifyContent: 'flex-start', marginTop: commonStyles.SPACING.small, flexWrap: 'wrap' },
   itemButton: { paddingVertical: commonStyles.SPACING.xsmall, paddingHorizontal: commonStyles.SPACING.small, borderRadius: commonStyles.BORDER_RADIUS.small, marginRight: commonStyles.SPACING.small, marginTop: commonStyles.SPACING.xsmall, alignItems: 'center', justifyContent: 'center', minHeight: 30 },
-  itemButtonText: { color: theme.COLORS.white, fontFamily: commonStyles.FONTS.medium, fontSize: commonStyles.FONTS.sizes.xxsmall },
-  contributeButton: { backgroundColor: theme.COLORS.success },
-  editButton: { backgroundColor: theme.COLORS.primary },
-  deleteButton: { backgroundColor: theme.COLORS.error },
-  statusActionButton: { backgroundColor: theme.COLORS.secondary },
-  completeButton: {backgroundColor: theme.COLORS.success },
-  cancelGoalButton: { backgroundColor: theme.COLORS.warning },
-  reactivateButton: { backgroundColor: theme.COLORS.info },
-  button: { backgroundColor: theme.COLORS.primary, padding: commonStyles.SPACING.small, borderRadius: commonStyles.BORDER_RADIUS.medium, alignItems: 'center' },
-  addButton: { backgroundColor: theme.COLORS.accent, marginBottom: commonStyles.SPACING.medium },
-  buttonText: { color: theme.COLORS.white, fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.small },
+  itemButtonText: { color: theme.colors.white, fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xxsmall },
+  contributeButton: { backgroundColor: theme.colors.success },
+  editButton: { backgroundColor: theme.colors.primary },
+  deleteButton: { backgroundColor: theme.colors.error },
+  statusActionButton: { backgroundColor: theme.colors.secondary },
+  completeButton: {backgroundColor: theme.colors.success },
+  cancelGoalButton: { backgroundColor: theme.colors.warning },
+  reactivateButton: { backgroundColor: theme.colors.info },
+  button: { backgroundColor: theme.colors.primary, padding: commonStyles.SPACING.small, borderRadius: commonStyles.BORDER_RADIUS.medium, alignItems: 'center' },
+  addButton: { backgroundColor: theme.colors.accent, marginBottom: commonStyles.SPACING.medium },
+  buttonText: { color: theme.colors.white, fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.small },
   centeredView: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)' },
   modalScrollView: { width: '100%', maxHeight: '90%' }, // Ensure modal is scrollable if content overflows
-  modalView: { width: '90%', marginHorizontal: '5%', backgroundColor: theme.COLORS.surface, borderRadius: commonStyles.BORDER_RADIUS.large, padding: commonStyles.SPACING.large, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5, marginVertical: commonStyles.SPACING.large },
-  modalTitle: { fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.medium, color: theme.COLORS.text, marginBottom: commonStyles.SPACING.large, textAlign: 'center' },
-  modalText: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.small, color: theme.COLORS.text, marginBottom: commonStyles.SPACING.medium, textAlign: 'center' },
-  input: { backgroundColor: theme.COLORS.inputBackground || theme.COLORS.background, color: theme.COLORS.text, borderWidth: 1, borderColor: theme.COLORS.border, borderRadius: commonStyles.BORDER_RADIUS.small, paddingHorizontal: commonStyles.SPACING.medium, paddingVertical: commonStyles.SPACING.small, fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.small, marginBottom: commonStyles.SPACING.medium, minHeight: 44 },
+  modalView: { width: '90%', marginHorizontal: '5%', backgroundColor: theme.colors.surface, borderRadius: commonStyles.BORDER_RADIUS.large, padding: commonStyles.SPACING.large, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5, marginVertical: commonStyles.SPACING.large },
+  modalTitle: { fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.medium, color: theme.colors.text, marginBottom: commonStyles.SPACING.large, textAlign: 'center' },
+  modalText: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.small, color: theme.colors.text, marginBottom: commonStyles.SPACING.medium, textAlign: 'center' },
+  input: { backgroundColor: theme.colors.inputBackground || theme.colors.background, color: theme.colors.text, borderWidth: 1, borderColor: theme.colors.border, borderRadius: commonStyles.BORDER_RADIUS.small, paddingHorizontal: commonStyles.SPACING.medium, paddingVertical: commonStyles.SPACING.small, fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.small, marginBottom: commonStyles.SPACING.medium, minHeight: 44 },
   modalButtonContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: commonStyles.SPACING.medium },
   modalButton: { flex: 1, marginHorizontal: commonStyles.SPACING.xsmall },
-  cancelButton: { backgroundColor: theme.COLORS.grey },
+  cancelButton: { backgroundColor: theme.colors.grey },
 });
