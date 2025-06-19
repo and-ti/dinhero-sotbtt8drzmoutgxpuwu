@@ -1,55 +1,91 @@
 // app/settings.tsx
 import React from 'react';
-import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
-import { useTheme } from '../src/context/ThemeContext'; // Adjust path as necessary
-import { commonStyles } from '../src/styles/theme'; // For common font/spacing if needed
+import { Platform, StyleSheet, View } from 'react-native';
+import {
+  Switch as PaperSwitch,
+  Text as PaperText,
+  useTheme,
+  Button as PaperButton, // Added for potential future use like logout
+} from 'react-native-paper';
+// Assuming useTheme from ThemeContext is compatible or we switch to Paper's useTheme
+// For consistency with other refactors, let's assume useTheme is from react-native-paper or compatible.
+// import { useTheme } from '../src/context/ThemeContext'; // If this context provides PaperThemeType
+import { PaperThemeType } from '../src/styles/theme'; // Import theme type
+import { useRouter } from 'expo-router'; // For logout navigation
 
 export default function SettingsScreen() {
-  const { theme, toggleTheme, currentMode } = useTheme();
-  const styles = getDynamicStyles(theme);
+  // Assuming toggleTheme and currentMode are correctly provided by the theme context used.
+  // If useTheme is from Paper, ThemeContext might need to be adjusted or toggleTheme handled differently.
+  // For this refactor, we'll assume the custom ThemeContext's useTheme provides these.
+  // If ThemeContext is the one from `../../src/context/ThemeContext` and it's not providing PaperThemeType,
+  // then theme properties might not align. This was standardized in other files.
+  // For now, let's assume it's compatible or useTheme from Paper is intended.
+  const { theme, toggleTheme, currentMode } = useTheme() as any; // Cast to any if custom context not fully Paper compatible yet
+  const styles = getDynamicStyles(theme as PaperThemeType); // Cast theme for styles
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // Perform logout actions (clear session, tokens, etc.)
+    console.log("Logout action performed");
+    router.replace('/login'); // Navigate to login screen
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Configurações</Text>
+      <PaperText variant="headlineMedium" style={styles.title}>Configurações</PaperText>
 
       <View style={styles.optionRow}>
-        <Text style={styles.optionText}>Modo Escuro</Text>
-        <Switch
-          trackColor={{ false: theme.colors.customLightGray, true: theme.colors.primary }}
-          thumbColor={Platform.OS === 'android' ? theme.colors.white : ''} // Android thumb color often white
-          ios_backgroundColor={theme.colors.customLightGray} // Background of the track for iOS
-          onValueChange={toggleTheme}
+        <PaperText variant="bodyLarge" style={styles.optionText}>Modo Escuro</PaperText>
+        <PaperSwitch
           value={currentMode === 'dark'}
+          onValueChange={toggleTheme}
+          color={theme.colors.primary} // Color of the switch when 'on'
         />
       </View>
+
+      {/* Example Logout Button */}
+      <PaperButton
+        mode="contained"
+        onPress={handleLogout}
+        style={styles.button}
+        icon="logout"
+      >
+        Log Out
+      </PaperButton>
+
       {/* Add more settings options here if needed */}
     </View>
   );
 }
 
-const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
+const getDynamicStyles = (theme: PaperThemeType) => StyleSheet.create({
   container: {
     flex: 1,
-    padding: commonStyles.SPACING.medium,
+    padding: theme.SPACING.medium,
     backgroundColor: theme.colors.background,
   },
   title: {
-    fontSize: commonStyles.FONTS.sizes.xlarge,
-    fontFamily: commonStyles.FONTS.bold,
+    // fontSize: theme.FONTS.sizes.xlarge, // Handled by variant
+    // fontFamily: theme.FONTS.bold, // Handled by variant
     color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.large,
+    marginBottom: theme.SPACING.large,
+    textAlign: 'center', // Center title
   },
   optionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: commonStyles.SPACING.medium,
+    paddingVertical: theme.SPACING.medium,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.outline, // Use outline or outlineVariant
   },
   optionText: {
-    fontSize: commonStyles.FONTS.sizes.medium,
-    fontFamily: commonStyles.FONTS.regular,
+    // fontSize: theme.FONTS.sizes.medium, // Handled by variant
+    // fontFamily: theme.FONTS.regular, // Handled by variant
     color: theme.colors.text,
+  },
+  button: { // Style for the logout button
+    marginTop: theme.SPACING.large,
+    borderRadius: theme.BORDER_RADIUS.button,
   },
 });

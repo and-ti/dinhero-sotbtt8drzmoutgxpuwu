@@ -15,6 +15,17 @@ export const commonStyles = {
     medium: 10,
     large: 15,
   },
+  ROUNDNESS: {
+    small: 4,
+    medium: 8,
+    large: 12,
+    button: 20, // Example for buttons
+  },
+  ELEVATION: { // Standard elevation values
+    small: 2,
+    medium: 5,
+    large: 8,
+  },
   FONTS: {
     regular: Platform.OS === 'ios' ? 'System' : 'Roboto',
     bold: Platform.OS === 'ios' ? 'System-Bold' : 'Roboto-Bold', // Note: React Native Paper uses font weights (e.g., 400, 700) with configureFonts.
@@ -50,9 +61,11 @@ export const lightColors = {
   placeholder: '#8A8A8E', // Added for mapping to Paper's placeholder
   inputBackground: '#FFFFFF',
   borderColor: '#D1D1D6',
+  inputFocusBorder: '#007AFF', // Color for focused input border
+  buttonDisabledBackground: '#E5E5EA', // Background color for disabled buttons
   info: '#007AFF', // Added for mapping to Paper's info color
   accent: '#FF3B30', // Added for mapping to Paper's secondary/accent
-  inputbackground: '#F2F2F7', // For input backgrounds in light mode
+  // inputbackground: '#F2F2F7', // Corrected below
 };
 
 export const darkColors = {
@@ -75,9 +88,11 @@ export const darkColors = {
   placeholder: '#8D8D93', // Added for mapping to Paper's placeholder
   inputBackground: '#1C1C1E',
   borderColor: '#3A3A3C',
+  inputFocusBorder: '#0A84FF', // Color for focused input border
+  buttonDisabledBackground: '#2C2C2E', // Background color for disabled buttons
   info: '#0A84FF', // Added for mapping to Paper's info color
   accent: '#FF453A', // Added for mapping to Paper's secondary/accent
-  inputbackground: '#1C1C1E', // For input backgrounds in dark mode
+  // inputbackground: '#1C1C1E', // Corrected below
 };
 
 // Font configuration for React Native Paper
@@ -96,44 +111,46 @@ const fontConfig = {
   // If specific bold versions of fonts are used globally, configure them here.
 };
 
-
 export const PaperLightTheme = {
   ...MD3LightTheme,
+  roundness: commonStyles.ROUNDNESS.medium, // Default roundness for components
   colors: {
     ...MD3LightTheme.colors,
     primary: lightColors.primary,
-    accent: lightColors.accent,
-    success: lightColors.accent,
+    accent: lightColors.accent, // Maintained for compatibility if used
+    success: lightColors.success, // Corrected mapping
     warning: lightColors.warning,
     error: lightColors.error,
-    text: lightColors.primary,
+    text: lightColors.text, // Corrected mapping
     textMuted: lightColors.textMuted,
-    secondary: lightColors.accent, // MD3 uses 'secondary'
+    secondary: lightColors.accent, // MD3 uses 'secondary' for accent-like colors
     background: lightColors.background,
     surface: lightColors.cardBackground, // Mapping cardBackground to surface
-    onSurface: lightColors.text,
-    onSurfaceVariant: lightColors.subtleText,
-    surfaceMuted: lightColors.surfaceMuted, // For muted surfaces
-    surfaceSuccessMuted: lightColors.surfaceSuccessMuted, // For success muted surfaces
-    outline: lightColors.borderColor,
-    border: lightColors.borderColor, // For borders
-    surfaceVariant: lightColors.inputBackground, // For input backgrounds
+    onSurface: lightColors.text, // Text color on surface
+    onSurfaceVariant: lightColors.subtleText, // Muted text color on surface
+    surfaceMuted: lightColors.surfaceMuted,
+    surfaceSuccessMuted: lightColors.surfaceSuccessMuted,
+    outline: lightColors.borderColor, // Default border color
+    border: lightColors.borderColor, // Alias for outline for some components
+    surfaceVariant: lightColors.inputBackground, // Background for elements like InputText, Chip etc.
     customWhite: lightColors.white,
     customBlack: lightColors.black,
     customGray: lightColors.gray,
-    white: lightColors.white, // Paper's white
-    black: lightColors.black, // Paper's black
-    grey: lightColors.gray, // For consistency with Paper's theme structure
-    placeholder: lightColors.gray,
+    white: lightColors.white,
+    black: lightColors.black,
+    grey: lightColors.gray, // Paper's grey
+    placeholder: lightColors.placeholder, // Explicitly map placeholder
     customLightGray: lightColors.lightGray,
-    inputBackground: lightColors.inputBackground,
-    info: lightColors.info, // Added for mapping to Paper's info color
-    originalSecondary: lightColors.secondary, // if needed for specific components not using Paper's theme structure
+    inputBackground: lightColors.inputBackground, // Specific for inputs if needed differently from surfaceVariant
+    inputFocusBorder: lightColors.inputFocusBorder,
+    buttonDisabledBackground: lightColors.buttonDisabledBackground,
+    info: lightColors.info,
+    originalSecondary: lightColors.secondary,
   },
-  // fonts: configureFonts({config: fontConfig, isV3: true}), // Example if using custom font variants globally
-  // Keeping custom non-Paper theme properties for now, namespaced if possible or at root
+  // fonts: configureFonts({config: fontConfig, isV3: true}),
   SPACING: commonStyles.SPACING,
-  BORDER_RADIUS: commonStyles.BORDER_RADIUS,
+  BORDER_RADIUS: commonStyles.BORDER_RADIUS, // Keep custom border radius if needed alongside Paper's roundness
+  ELEVATION: commonStyles.ELEVATION, // Custom elevation values
   BLUR_EFFECT: {
     tint: 'light' as 'light' | 'dark' | 'default',
     intensity: Platform.OS === 'ios' ? 80 : 100,
@@ -144,40 +161,44 @@ export const PaperLightTheme = {
 
 export const PaperDarkTheme = {
   ...MD3DarkTheme,
+  roundness: commonStyles.ROUNDNESS.medium, // Default roundness for components
   colors: {
     ...MD3DarkTheme.colors,
     primary: darkColors.primary,
-    accent: darkColors.accent,
-    success: darkColors.accent,
+    accent: darkColors.accent, // Maintained for compatibility if used
+    success: darkColors.success, // Corrected mapping
     warning: darkColors.warning,
     error: darkColors.error,
-    text: darkColors.primary,
+    text: darkColors.text, // Corrected mapping
     textMuted: darkColors.textMuted,
-    secondary: darkColors.accent,
+    secondary: darkColors.accent, // MD3 uses 'secondary' for accent-like colors
     background: darkColors.background,
-    surface: darkColors.cardBackground,
-    surfaceMuted: darkColors.surfaceMuted, // For muted surfaces
-    surfaceSuccessMuted: darkColors.surfaceSuccessMuted, // For success muted surfaces
-    onSurface: darkColors.text,
-    onSurfaceVariant: darkColors.subtleText,
-    outline: darkColors.borderColor,
-    border: darkColors.borderColor, // For borders
-    surfaceVariant: darkColors.inputBackground,
+    surface: darkColors.cardBackground, // Mapping cardBackground to surface
+    surfaceMuted: darkColors.surfaceMuted,
+    surfaceSuccessMuted: darkColors.surfaceSuccessMuted,
+    onSurface: darkColors.text, // Text color on surface
+    onSurfaceVariant: darkColors.subtleText, // Muted text color on surface
+    outline: darkColors.borderColor, // Default border color
+    border: darkColors.borderColor, // Alias for outline for some components
+    surfaceVariant: darkColors.inputBackground, // Background for elements like InputText, Chip etc.
     customWhite: darkColors.white,
     customBlack: darkColors.black,
     customGray: darkColors.gray,
-    white: darkColors.white, // Paper's white
-    black: darkColors.black, // Paper's black
-    grey: darkColors.gray, // For consistency with Paper's theme structure
-    placeholder: darkColors.gray,
+    white: darkColors.white,
+    black: darkColors.black,
+    grey: darkColors.gray, // Paper's grey
+    placeholder: darkColors.placeholder, // Explicitly map placeholder
     customLightGray: darkColors.lightGray,
-    inputBackground: darkColors.inputBackground, // For input backgrounds
-    info: darkColors.info, // Added for mapping to Paper's info color
+    inputBackground: darkColors.inputBackground, // Specific for inputs if needed differently from surfaceVariant
+    inputFocusBorder: darkColors.inputFocusBorder,
+    buttonDisabledBackground: darkColors.buttonDisabledBackground,
+    info: darkColors.info,
     originalSecondary: darkColors.secondary,
   },
   // fonts: configureFonts({config: fontConfig, isV3: true}),
   SPACING: commonStyles.SPACING,
-  BORDER_RADIUS: commonStyles.BORDER_RADIUS,
+  BORDER_RADIUS: commonStyles.BORDER_RADIUS, // Keep custom border radius if needed alongside Paper's roundness
+  ELEVATION: commonStyles.ELEVATION, // Custom elevation values
   BLUR_EFFECT: {
     tint: 'dark' as 'light' | 'dark' | 'default',
     intensity: Platform.OS === 'ios' ? 80 : 100,
@@ -192,3 +213,11 @@ export const getTheme = (mode: 'light' | 'dark') => {
 
 // Export the new theme types
 export type PaperThemeType = typeof PaperLightTheme;
+
+// Correcting the naming convention for inputbackground in lightColors and darkColors
+// This is done by ensuring the theme objects use the corrected names (inputBackground)
+// and removing the old misnamed 'inputbackground' if it was defined separately.
+// The changes above in lightColors and darkColors already removed the misnamed 'inputbackground'
+// and expect 'inputBackground' to be used.
+// The PaperLightTheme and PaperDarkTheme mappings for surfaceVariant and inputBackground
+// already use 'inputBackground', so those are correct.

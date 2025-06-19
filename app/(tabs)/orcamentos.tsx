@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useTheme } from '../../src/context/ThemeContext'; // ADD THIS
+import { Alert, FlatList, Modal, StyleSheet, View } from "react-native";
+import {
+  Button,
+  Card,
+  Text, // Use Paper's Text
+  TextInput as PaperTextInput, // Use Paper's TextInput
+  useTheme, // Use Paper's useTheme
+} from 'react-native-paper';
 import type { Budget } from '../../src/database'; // Import the Budget interface
 import { addBudget, deleteBudget, getBudgetsByFamilyId, getDBConnection, updateBudget } from '../../src/database';
-import { commonStyles } from '../../src/styles/theme'; // Import commonStyles
+import { PaperThemeType } from '../../src/styles/theme'; // Import PaperThemeType
 
 export default function OrcamentosScreen() {
-  const { theme } = useTheme(); // ADD THIS
-  const styles = getDynamicStyles(theme); // ADD THIS
+  const theme = useTheme<PaperThemeType>();
+  const styles = getDynamicStyles(theme);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
@@ -131,31 +137,40 @@ export default function OrcamentosScreen() {
   };
 
   const renderBudget = ({ item }: { item: Budget }) => (
-    <View style={styles.budgetItem}>
-      <Text style={styles.budgetText}>Nome: {item.name}</Text>
-      <Text style={styles.budgetText}>Valor: R$ {item.amount.toFixed(2)}</Text>
-      <Text style={styles.budgetText}>Categoria: {item.category}</Text>
-      <Text style={styles.budgetText}>Início: {item.startDate}</Text>
-      <Text style={styles.budgetText}>Fim: {item.endDate}</Text>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => openEditModal(item)}>
-          <Text style={styles.buttonText}>Editar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={() => handleDeleteBudget(item.id)}>
-          <Text style={styles.buttonText}>Excluir</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <Card style={styles.budgetItemCard} elevation={theme.ELEVATION.small}>
+      <Card.Title title={item.name} titleStyle={styles.cardTitle}/>
+      <Card.Content>
+        <Text variant="bodyLarge" style={styles.budgetText}>Valor: R$ {item.amount.toFixed(2)}</Text>
+        <Text variant="bodyMedium" style={styles.budgetText}>Categoria: {item.category}</Text>
+        <Text variant="bodySmall" style={styles.budgetText}>Início: {item.startDate}</Text>
+        <Text variant="bodySmall" style={styles.budgetText}>Fim: {item.endDate}</Text>
+      </Card.Content>
+      <Card.Actions style={styles.cardActions}>
+        <Button mode="contained" onPress={() => openEditModal(item)} style={styles.actionButton} compact>
+          Editar
+        </Button>
+        <Button mode="contained" buttonColor={theme.colors.error} onPress={() => handleDeleteBudget(item.id)} style={styles.actionButton} compact>
+          Excluir
+        </Button>
+      </Card.Actions>
+    </Card>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Meus Orçamentos</Text>
-      <TouchableOpacity style={[styles.button, styles.addButton]} onPress={openAddModal}>
-        <Text style={styles.buttonText}>Adicionar Novo Orçamento</Text>
-      </TouchableOpacity>
+      <Text variant="headlineMedium" style={styles.title}>Meus Orçamentos</Text>
+      <Button
+        mode="contained"
+        onPress={openAddModal}
+        style={styles.addBudgetButton}
+        icon="plus-circle-outline"
+        buttonColor={theme.colors.secondary}
+        textColor={theme.colors.white}
+      >
+        Adicionar Novo Orçamento
+      </Button>
       {budgets.length === 0 ? (
-        <Text style={styles.text}>Nenhum orçamento encontrado.</Text>
+        <Text style={styles.emptyListText} variant="bodyLarge">Nenhum orçamento encontrado.</Text>
       ) : (
         <FlatList
           data={budgets}
@@ -172,193 +187,170 @@ export default function OrcamentosScreen() {
         onRequestClose={handleCloseModal}
       >
         <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>{editingBudget ? "Editar Orçamento" : "Adicionar Novo Orçamento"}</Text>
-            <TextInput
-              placeholder="Nome do Orçamento"
-              value={newBudgetName}
-              onChangeText={setNewBudgetName}
-              style={styles.input}
-              placeholderTextColor={theme.colors.placeholder}
-            />
-            <TextInput
-              placeholder="Valor (ex: 500.00)"
-              value={newBudgetAmount}
-              onChangeText={setNewBudgetAmount}
-              style={styles.input}
-              keyboardType="numeric"
-              placeholderTextColor={theme.colors.placeholder}
-            />
-            <TextInput
-              placeholder="Categoria (ex: Alimentação)"
-              value={newBudgetCategory}
-              onChangeText={setNewBudgetCategory}
-              style={styles.input}
-              placeholderTextColor={theme.colors.placeholder}
-            />
-            <TextInput
-              placeholder="Data de Início (YYYY-MM-DD)"
-              value={newBudgetStartDate}
-              onChangeText={setNewBudgetStartDate}
-              style={styles.input}
-              placeholderTextColor={theme.colors.placeholder}
-            />
-            <TextInput
-              placeholder="Data de Término (YYYY-MM-DD)"
-              value={newBudgetEndDate}
-              onChangeText={setNewBudgetEndDate}
-              style={styles.input}
-              placeholderTextColor={theme.colors.placeholder}
-            />
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity
-                style={[styles.button, styles.modalButton]}
-                onPress={handleSaveBudget}
-              >
-                <Text style={styles.buttonText}>{editingBudget ? "Salvar Alterações" : "Salvar Orçamento"}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.modalButton, styles.cancelButton]}
-                onPress={handleCloseModal}
-              >
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            <Card style={styles.modalCard}>
+              <Card.Title title={editingBudget ? "Editar Orçamento" : "Adicionar Novo Orçamento"} titleStyle={styles.modalTitle}/>
+              <Card.Content>
+                <PaperTextInput
+                  label="Nome do Orçamento"
+                  value={newBudgetName}
+                  onChangeText={setNewBudgetName}
+                  style={styles.input}
+                  mode="outlined"
+                />
+                <PaperTextInput
+                  label="Valor (ex: 500.00)"
+                  value={newBudgetAmount}
+                  onChangeText={setNewBudgetAmount}
+                  style={styles.input}
+                  keyboardType="numeric"
+                  mode="outlined"
+                />
+                <PaperTextInput
+                  label="Categoria (ex: Alimentação)"
+                  value={newBudgetCategory}
+                  onChangeText={setNewBudgetCategory}
+                  style={styles.input}
+                  mode="outlined"
+                />
+                <PaperTextInput
+                  label="Data de Início (YYYY-MM-DD)"
+                  value={newBudgetStartDate}
+                  onChangeText={setNewBudgetStartDate}
+                  style={styles.input}
+                  mode="outlined"
+                />
+                <PaperTextInput
+                  label="Data de Término (YYYY-MM-DD)"
+                  value={newBudgetEndDate}
+                  onChangeText={setNewBudgetEndDate}
+                  style={styles.input}
+                  mode="outlined"
+                />
+              </Card.Content>
+              <Card.Actions style={styles.modalActions}>
+                <Button
+                  mode="contained"
+                  onPress={handleSaveBudget}
+                  style={styles.modalButton}
+                >
+                  {editingBudget ? "Salvar Alterações" : "Salvar Orçamento"}
+                </Button>
+                <Button
+                  mode="outlined"
+                  onPress={handleCloseModal}
+                  style={styles.modalButton}
+                >
+                  Cancelar
+                </Button>
+              </Card.Actions>
+            </Card>
         </View>
       </Modal>
     </View>
   );
 }
 
-// Function to generate styles based on the current theme
-const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
+const getDynamicStyles = (theme: PaperThemeType) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    padding: commonStyles.SPACING.medium,
+    padding: theme.SPACING.medium,
   },
   title: {
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.large,
+    // fontFamily: theme.FONTS.bold, // Handled by Text variant="headlineMedium"
+    // fontSize: theme.FONTS.sizes.large, // Handled by Text variant="headlineMedium"
     color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: commonStyles.SPACING.medium,
+    marginBottom: theme.SPACING.medium,
   },
-  text: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.colors.text,
+  emptyListText: { // Applied to Paper Text
     textAlign: 'center',
+    marginVertical: theme.SPACING.large,
+    color: theme.colors.textMuted,
   },
   listContentContainer: {
-    paddingBottom: commonStyles.SPACING.large,
+    paddingBottom: theme.SPACING.large,
   },
-  budgetItem: {
-    backgroundColor: theme.colors.surface,
-    padding: commonStyles.SPACING.medium,
-    borderRadius: commonStyles.BORDER_RADIUS.medium,
-    marginBottom: commonStyles.SPACING.medium,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  budgetItemCard: {
+    // backgroundColor: theme.colors.surface, // Handled by Card
+    borderRadius: theme.BORDER_RADIUS.medium, // Handled by Card theme
+    marginBottom: theme.SPACING.medium,
+    // elevation: theme.ELEVATION.small, // Passed as prop
+  },
+  cardTitle: {
+    // Custom styling for Card.Title if needed, otherwise rely on Paper's defaults
+    // color: theme.colors.text,
   },
   budgetText: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.xsmall,
+    // fontFamily: theme.FONTS.regular, // Handled by Text variant
+    // fontSize: theme.FONTS.sizes.small, // Handled by Text variant
+    // color: theme.colors.text, // Handled by Text variant
+    marginBottom: theme.SPACING.xsmall,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: commonStyles.SPACING.small,
+  cardActions: {
+    justifyContent: 'flex-end', // Align buttons to the right
+    paddingTop: theme.SPACING.small,
   },
-  button: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: commonStyles.SPACING.xsmall,
-    paddingHorizontal: commonStyles.SPACING.small,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    marginLeft: commonStyles.SPACING.small,
+  actionButton: {
+    marginLeft: theme.SPACING.small,
   },
-  addButton: {
-    backgroundColor: theme.colors.accent,
-    paddingVertical: commonStyles.SPACING.medium,
-    paddingHorizontal: commonStyles.SPACING.medium,
-    borderRadius: commonStyles.BORDER_RADIUS.medium,
-    alignItems: 'center',
-    marginBottom: commonStyles.SPACING.medium,
-    alignSelf: 'stretch',
-  },
-  deleteButton: {
-    backgroundColor: theme.colors.error,
-  },
-  buttonText: {
-    color: theme.colors.white,
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.xsmall,
+  addBudgetButton: {
+    // backgroundColor: theme.colors.secondary, // Set via buttonColor prop
+    // paddingVertical: theme.SPACING.medium, // Handled by Button
+    // paddingHorizontal: theme.SPACING.medium, // Handled by Button
+    // borderRadius: theme.BORDER_RADIUS.medium, // Handled by Button
+    // alignItems: 'center', // Handled by Button
+    marginBottom: theme.SPACING.medium,
+    // alignSelf: 'stretch', // Default for block button
   },
   // Modal Styles
   centeredView: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Dim background
+    // marginTop: 22, // Removed, not needed with flex:1 and justifyContent
+    backgroundColor: theme.colors.backdrop || 'rgba(0,0,0,0.5)',
   },
-  modalView: {
-    margin: commonStyles.SPACING.medium,
-    backgroundColor: theme.colors.surface, // Use surface color for modal background
-    borderRadius: commonStyles.BORDER_RADIUS.large,
-    padding: commonStyles.SPACING.large,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '90%', // Modal width
+  modalCard: { // Card used as modal panel
+    width: '90%',
+    alignSelf: 'center',
+    // margin: theme.SPACING.medium, // alignSelf and fixed width handle this
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.BORDER_RADIUS.large,
+    padding: theme.SPACING.small, // Reduced padding as Card.Content/Actions will have their own
+    elevation: theme.ELEVATION.large,
   },
-  modalTitle: {
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.medium, // Adjusted size for modal
-    color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.medium,
+  modalTitle: { // Applied to Card.Title in modal
+    // fontFamily: theme.FONTS.bold, // Handled by Card.Title
+    // fontSize: theme.FONTS.sizes.medium, // Handled by Card.Title
     textAlign: 'center',
+    // color: theme.colors.text, // Handled by Card.Title
+    // marginBottom: theme.SPACING.medium, // Handled by Card.Title
   },
-  input: {
-    height: 50, // Increased height for better touchability
-    borderColor: theme.colors.border,
-    borderWidth: 1,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    marginBottom: commonStyles.SPACING.medium, // Consistent spacing
-    paddingHorizontal: commonStyles.SPACING.small,
-    width: '100%', // Full width
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.text, // Ensure text is visible
+  input: { // Applied to PaperTextInput in modal
+    // height: 50, // Handled by PaperTextInput
+    // borderColor: theme.colors.border, // Handled by PaperTextInput mode="outlined"
+    // borderWidth: 1, // Handled by PaperTextInput mode="outlined"
+    // borderRadius: theme.BORDER_RADIUS.small, // Handled by PaperTextInput
+    marginBottom: theme.SPACING.medium,
+    // paddingHorizontal: theme.SPACING.small, // Handled by PaperTextInput
+    // width: '100%', // Default for PaperTextInput in a Card
+    // fontFamily: theme.FONTS.regular, // Handled by PaperTextInput
+    // fontSize: theme.FONTS.sizes.small, // Handled by PaperTextInput
+    // color: theme.colors.text, // Handled by PaperTextInput
   },
-  modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around', // Distribute buttons evenly
-    width: '100%',
-    marginTop: commonStyles.SPACING.small,
+  modalActions: { // Applied to Card.Actions in modal
+    justifyContent: 'space-around',
+    paddingTop: theme.SPACING.medium,
   },
-  modalButton: {
-    paddingVertical: commonStyles.SPACING.small, // Adjusted padding
-    paddingHorizontal: commonStyles.SPACING.medium, // Adjusted padding
-    borderRadius: commonStyles.BORDER_RADIUS.medium, // Consistent border radius
-    elevation: 2,
-    minWidth: 120, // Ensure buttons have a good size
-    alignItems: 'center',
+  modalButton: { // For buttons within the modal
+    flex: 0.48, // Allow buttons to share space
+    // paddingVertical: theme.SPACING.small, // Handled by Button
+    // paddingHorizontal: theme.SPACING.medium, // Handled by Button
+    // borderRadius: theme.BORDER_RADIUS.medium, // Handled by Button
+    // elevation: 2, // Handled by Button mode="contained"
+    // minWidth: 120, // Handled by Button content and padding
+    // alignItems: 'center', // Handled by Button
   },
-  cancelButton: {
-    backgroundColor: theme.colors.error, // Use error color for cancel
-    marginLeft: commonStyles.SPACING.small,
-  },
+  // cancelButton specific styling (like color) is handled by Button's mode or props directly
 });

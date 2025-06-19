@@ -5,14 +5,21 @@ import {
   Alert,
   FlatList,
   Modal,
+  Alert,
+  FlatList,
+  Modal,
   StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View
 } from 'react-native';
-import { useTheme } from '../../src/context/ThemeContext';
+import {
+  Button,
+  Card,
+  DataTable, // For tabular data if chosen, or just Card for items
+  Switch as PaperSwitch,
+  Text, // Use Paper's Text
+  TextInput as PaperTextInput, // Use Paper's TextInput
+  useTheme,
+} from 'react-native-paper';
 import {
   addCategory,
   addTransaction,
@@ -21,10 +28,10 @@ import {
   getDBConnection,
   getTransactionsByFamilyId,
   initDatabase,
-  Transaction, // Assuming Family might be needed for family_id context later
+  Transaction,
   updateTransaction
 } from '../../src/database';
-import { commonStyles } from '../../src/styles/theme';
+import { PaperThemeType } from '../../src/styles/theme'; // Import PaperThemeType
 
 // Default categories to seed if none exist
 const DEFAULT_CATEGORIES = [
@@ -40,7 +47,7 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export default function TransacoesScreen() {
-  const { theme } = useTheme();
+  const theme = useTheme<PaperThemeType>();
   const styles = getDynamicStyles(theme);
 
   const [db, setDb] = useState<SQLiteDatabase | null>(null);
@@ -248,47 +255,55 @@ export default function TransacoesScreen() {
   };
 
   const renderTransaction = ({ item }: { item: Transaction }) => (
-    <View style={styles.transactionItem}>
-      <View style={styles.transactionDetails}>
-        <Text style={[styles.transactionDescription, styles.text]}>{item.description}</Text>
-        <Text style={styles.transactionDate}>
-          {new Date(item.transaction_date).toLocaleDateString()} - {getCategoryName(item.category_id)}
-        </Text>
-      </View>
-      <View style={styles.transactionRightContent}>
-        <Text style={[styles.transactionAmount, item.type === 'income' ? styles.incomeText : styles.expenseText]}>
-          {item.type === 'income' ? '+' : '-'} R$ {item.amount.toFixed(2)}
-        </Text>
-        <View style={styles.itemActionButtonsContainer}>
-          <TouchableOpacity onPress={() => handleOpenModal(item)} style={[styles.itemActionButton, styles.editButton]}>
-            <Text style={styles.itemActionButtonText}>Editar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDeleteConfirmation(item.id)} style={[styles.itemActionButton, styles.deleteButton]}>
-            <Text style={styles.itemActionButtonText}>Excluir</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+    <Card style={styles.transactionItemCard} elevation={theme.ELEVATION.small}>
+        <Card.Content style={styles.cardContent}>
+            <View style={styles.transactionDetails}>
+                <Text variant="titleMedium" style={styles.transactionDescription}>{item.description}</Text>
+                <Text variant="bodySmall" style={styles.transactionMeta}>
+                    {new Date(item.transaction_date).toLocaleDateString()} - {getCategoryName(item.category_id)}
+                </Text>
+            </View>
+            <View style={styles.transactionAmountContainer}>
+                <Text variant="bodyLarge" style={[styles.transactionAmount, item.type === 'income' ? styles.incomeText : styles.expenseText]}>
+                    {item.type === 'income' ? '+' : '-'} R$ {item.amount.toFixed(2)}
+                </Text>
+            </View>
+        </Card.Content>
+      <Card.Actions style={styles.cardActions}>
+        <Button mode="contained" onPress={() => handleOpenModal(item)} style={styles.actionButton} compact>
+          Editar
+        </Button>
+        <Button mode="contained" buttonColor={theme.colors.error} onPress={() => handleDeleteConfirmation(item.id)} style={styles.actionButton} compact>
+          Excluir
+        </Button>
+      </Card.Actions>
+    </Card>
   );
 
   const filteredCategories = categories.filter(cat => cat.type === type || cat.family_id === null);
 
-
   if (!isDBInitialized) {
-    return <View style={styles.container}><Text style={styles.text}>Inicializando banco de dados...</Text></View>;
+    return <View style={styles.container}><Text variant="bodyLarge" style={styles.loadingText}>Inicializando banco de dados...</Text></View>;
   }
   if (isLoading) {
-    return <View style={styles.container}><Text style={styles.text}>Carregando dados...</Text></View>;
+    return <View style={styles.container}><Text variant="bodyLarge" style={styles.loadingText}>Carregando dados...</Text></View>;
   }
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={[styles.button, styles.addButton]} onPress={() => handleOpenModal()}>
-        <Text style={styles.buttonText}>Adicionar Nova Transação</Text>
-      </TouchableOpacity>
+      <Button
+        mode="contained"
+        onPress={() => handleOpenModal()}
+        style={styles.addTransactionButton}
+        icon="plus-circle-outline"
+        buttonColor={theme.colors.secondary}
+        textColor={theme.colors.white}
+      >
+        Adicionar Nova Transação
+      </Button>
 
       {transactions.length === 0 ? (
-        <Text style={styles.text}>Nenhuma transação encontrada.</Text>
+        <Text style={styles.emptyListText} variant="headlineSmall">Nenhuma transação encontrada.</Text>
       ) : (
         <FlatList
           data={transactions}
@@ -305,161 +320,128 @@ export default function TransacoesScreen() {
         onRequestClose={handleCloseModal}
       >
         <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>{isEditing ? 'Editar Transação' : 'Adicionar Nova Transação'}</Text>
-
-            <TextInput
-              placeholder="Descrição"
-              value={description}
-              onChangeText={setDescription}
-              style={styles.input}
-              placeholderTextColor={theme.colors.placeholder}
-            />
-            <TextInput
-              placeholder="Valor (ex: 50.99)"
-              value={amount}
-              onChangeText={setAmount}
-              style={styles.input}
-              keyboardType="numeric"
-              placeholderTextColor={theme.colors.placeholder}
-            />
-            <TextInput
-              placeholder="Data (YYYY-MM-DD)"
-              value={transactionDate}
-              onChangeText={setTransactionDate}
-              style={styles.input}
-              placeholderTextColor={theme.colors.placeholder}
-            />
-
-            <View style={styles.switchContainer}>
-              <Text style={styles.label}>Tipo:</Text>
-              <Text style={[styles.typeLabel, type === 'expense' ? styles.activeTypeText : styles.inactiveTypeText]}>Despesa</Text>
-              <Switch
-                trackColor={{ false: theme.colors.error, true: theme.colors.success }}
-                thumbColor={theme.colors.white}
-                ios_backgroundColor={theme.colors.error}
-                onValueChange={() => setType(prevType => prevType === 'expense' ? 'income' : 'expense')}
-                value={type === 'income'}
+          <Card style={styles.modalCard}>
+            <Card.Title title={isEditing ? 'Editar Transação' : 'Adicionar Nova Transação'} titleStyle={styles.modalTitle}/>
+            <Card.Content>
+              <PaperTextInput
+                label="Descrição"
+                value={description}
+                onChangeText={setDescription}
+                style={styles.input}
+                mode="outlined"
               />
-              <Text style={[styles.typeLabel, type === 'income' ? styles.activeTypeText : styles.inactiveTypeText]}>Receita</Text>
-            </View>
+              <PaperTextInput
+                label="Valor (ex: 50.99)"
+                value={amount}
+                onChangeText={setAmount}
+                style={styles.input}
+                keyboardType="numeric"
+                mode="outlined"
+              />
+              <PaperTextInput
+                label="Data (YYYY-MM-DD)"
+                value={transactionDate}
+                onChangeText={setTransactionDate}
+                style={styles.input}
+                mode="outlined"
+                // Consider using react-native-paper-dates for a DatePicker
+              />
 
-            <Text style={styles.label}>Categoria:</Text>
-            <View style={styles.pickerContainer}>
-                <Picker
-                selectedValue={selectedCategoryId}
-                onValueChange={(itemValue) => setSelectedCategoryId(itemValue)}
-                style={styles.picker}
-                dropdownIconColor={theme.colors.text}
-                prompt="Selecione uma Categoria"
-                >
-                <Picker.Item label="Selecione uma categoria..." value={null} style={{color: theme.colors.textMuted || theme.colors.text}} />
-                {filteredCategories.map((cat) => (
-                    <Picker.Item key={cat.id} label={cat.name} value={cat.id} style={{color: theme.colors.text}}/>
-                ))}
-                </Picker>
-            </View>
+              <View style={styles.switchRow}>
+                <Text variant="bodyLarge" style={styles.label}>Tipo:</Text>
+                <Text style={[styles.typeLabel, type === 'expense' ? styles.activeTypeText : {}]}>Despesa</Text>
+                <PaperSwitch
+                  value={type === 'income'}
+                  onValueChange={() => setType(prevType => prevType === 'expense' ? 'income' : 'expense')}
+                  color={theme.colors.primary} // Or use success for income, error for expense if desired
+                />
+                <Text style={[styles.typeLabel, type === 'income' ? styles.activeTypeText : {}]}>Receita</Text>
+              </View>
 
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity
-                style={[styles.button, styles.modalButton]}
+              <Text variant="bodyLarge" style={styles.label}>Categoria:</Text>
+              <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={selectedCategoryId}
+                    onValueChange={(itemValue) => setSelectedCategoryId(itemValue)}
+                    style={[styles.picker, { color: theme.colors.text }]} // Ensure picker text color matches theme
+                    dropdownIconColor={theme.colors.text}
+                    prompt="Selecione uma Categoria"
+                  >
+                  <Picker.Item label="Selecione uma categoria..." value={null} style={{color: theme.colors.textMuted || theme.colors.text}} />
+                  {filteredCategories.map((cat) => (
+                      <Picker.Item key={cat.id} label={cat.name} value={cat.id} style={{color: theme.colors.text}} />
+                  ))}
+                  </Picker>
+              </View>
+            </Card.Content>
+            <Card.Actions style={styles.modalActions}>
+              <Button
+                mode="contained"
                 onPress={handleSaveTransaction}
+                style={styles.modalButton}
               >
-                <Text style={styles.buttonText}>{isEditing ? 'Salvar Alterações' : 'Salvar'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.modalButton, styles.cancelButton]}
+                {isEditing ? 'Salvar Alterações' : 'Salvar'}
+              </Button>
+              <Button
+                mode="outlined"
                 onPress={handleCloseModal}
+                style={styles.modalButton}
               >
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                Cancelar
+              </Button>
+            </Card.Actions>
+          </Card>
         </View>
       </Modal>
     </View>
   );
 }
 
-const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
+const getDynamicStyles = (theme: PaperThemeType) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    padding: commonStyles.SPACING.medium,
+    padding: theme.SPACING.medium,
   },
-  title: {
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.large,
-    color: theme.colors.text,
+  loadingText: {
     textAlign: 'center',
-    marginBottom: commonStyles.SPACING.medium,
+    marginVertical: theme.SPACING.large,
   },
-  text: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.colors.text,
+  emptyListText: {
     textAlign: 'center',
+    marginVertical: theme.SPACING.large,
+    color: theme.colors.textMuted,
   },
   listContentContainer: {
-    paddingBottom: commonStyles.SPACING.large,
+    paddingBottom: theme.SPACING.large,
   },
-  transactionItem: {
+  transactionItemCard: {
+    marginBottom: theme.SPACING.medium,
     backgroundColor: theme.colors.surface,
-    padding: commonStyles.SPACING.medium,
-    borderRadius: commonStyles.BORDER_RADIUS.medium,
-    marginBottom: commonStyles.SPACING.medium,
+    borderRadius: theme.BORDER_RADIUS.medium,
+  },
+  cardContent: { // Style for Card.Content to enable flex layout
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
   },
   transactionDetails: {
-    flex: 1,
-    marginRight: commonStyles.SPACING.small,
+    flex: 1, // Allow text to take available space and wrap
+    marginRight: theme.SPACING.small,
   },
-  transactionDescription: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.xxsmall,
+  transactionDescription: { // Applied to Paper Text
+    // color: theme.colors.text, // Default from variant
+    marginBottom: theme.SPACING.xxsmall,
   },
-  transactionDate: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.xsmall,
+  transactionMeta: { // Applied to Paper Text
     color: theme.colors.textMuted,
   },
-  transactionRightContent: {
+  transactionAmountContainer: {
     alignItems: 'flex-end',
   },
-  transactionAmount: {
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.medium,
-    marginBottom: commonStyles.SPACING.xsmall,
-  },
-  itemActionButtonsContainer: {
-    flexDirection: 'row',
-    marginTop: commonStyles.SPACING.xsmall,
-  },
-  itemActionButton: {
-    paddingVertical: commonStyles.SPACING.xxsmall,
-    paddingHorizontal: commonStyles.SPACING.small,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    marginLeft: commonStyles.SPACING.xsmall,
-  },
-  itemActionButtonText: {
-    color: theme.colors.white,
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.xxsmall,
-  },
-  editButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  deleteButton: {
-    backgroundColor: theme.colors.error,
+  transactionAmount: { // Applied to Paper Text
+    // fontFamily: theme.FONTS.bold, // Handled by variant or direct styling if needed
+    // fontSize: theme.FONTS.sizes.medium, // Handled by variant
   },
   incomeText: {
     color: theme.colors.success,
@@ -467,112 +449,74 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
   expenseText: {
     color: theme.colors.error,
   },
-  button: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: commonStyles.SPACING.small,
-    paddingHorizontal: commonStyles.SPACING.medium,
-    borderRadius: commonStyles.BORDER_RADIUS.medium,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
+  cardActions: {
+    justifyContent: 'flex-end',
+    paddingTop: theme.SPACING.none, // Adjust if Card.Content has enough padding
   },
-  addButton: {
-    backgroundColor: theme.colors.accent,
-    marginBottom: commonStyles.SPACING.medium,
-    alignSelf: 'stretch',
+  actionButton: {
+    marginLeft: theme.SPACING.small,
   },
-  buttonText: {
-    color: theme.colors.white,
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
+  addTransactionButton: {
+    marginBottom: theme.SPACING.medium,
   },
   // Modal Styles
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: theme.colors.backdrop || 'rgba(0,0,0,0.6)',
   },
-  modalView: {
+  modalCard: {
     width: '90%',
+    alignSelf: 'center',
     backgroundColor: theme.colors.surface,
-    borderRadius: commonStyles.BORDER_RADIUS.large,
-    padding: commonStyles.SPACING.large,
-    alignItems: 'stretch',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    borderRadius: theme.BORDER_RADIUS.large,
+    padding: theme.SPACING.small, // Adjust padding for Card
+    elevation: theme.ELEVATION.large,
   },
-  modalTitle: {
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.large,
+  modalTitle: { // Applied to Card.Title
     textAlign: 'center',
   },
-  input: {
-    backgroundColor: theme.colors.inputBackground || theme.colors.background,
-    color: theme.colors.text,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    paddingHorizontal: commonStyles.SPACING.medium,
-    paddingVertical: commonStyles.SPACING.small,
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    marginBottom: commonStyles.SPACING.medium,
-    minHeight: 44,
+  input: { // Applied to PaperTextInput
+    marginBottom: theme.SPACING.medium,
   },
-  switchContainer: {
+  switchRow: { // For Switch and its labels
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: commonStyles.SPACING.large,
-    paddingHorizontal: commonStyles.SPACING.small,
+    justifyContent: 'space-around', // Evenly space items
+    marginBottom: theme.SPACING.large,
+    paddingVertical: theme.SPACING.small,
   },
-  label: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.text,
-    marginRight: commonStyles.SPACING.small, // Ensure some space for type switch label
+  label: { // Applied to Paper Text
+    // color: theme.colors.text, // Default from variant
+    // marginRight: theme.SPACING.small,
   },
-  typeLabel: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    marginHorizontal: commonStyles.SPACING.xsmall,
+  typeLabel: { // Applied to Paper Text for Switch
+    // marginHorizontal: theme.SPACING.xsmall,
   },
   activeTypeText: {
-    color: theme.colors.primary,
-    fontFamily: commonStyles.FONTS.bold,
-  },
-  inactiveTypeText: {
-    color: theme.colors.textMuted,
+    color: theme.colors.primary, // Or theme.colors.text
+    fontWeight: 'bold', // Make active type bold
   },
   pickerContainer: {
     borderColor: theme.colors.border,
     borderWidth: 1,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    marginBottom: commonStyles.SPACING.medium,
+    borderRadius: theme.BORDER_RADIUS.medium, // Consistent with PaperTextInput
+    marginBottom: theme.SPACING.medium,
     justifyContent: 'center',
-    minHeight: 50, // Increased height for picker
-    backgroundColor: theme.colors.inputBackground || theme.colors.background,
+    // backgroundColor: theme.colors.inputBackground || theme.colors.surface, // Use surface or specific input background
+    minHeight: 56, // Align with PaperTextInput height
   },
   picker: {
     width: '100%',
-    color: theme.colors.text,
+    // color: theme.colors.text, // Set in component style prop
+    // backgroundColor: 'transparent', // Ensure container bg shows
   },
-  modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: commonStyles.SPACING.medium,
+  modalActions: {
+    justifyContent: 'space-around',
+    paddingTop: theme.SPACING.medium,
   },
   modalButton: {
-    flex: 1,
-    marginHorizontal: commonStyles.SPACING.xsmall,
-  },
-  cancelButton: {
-    backgroundColor: theme.colors.grey,
+    flex: 0.48,
   },
 });

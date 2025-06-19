@@ -6,24 +6,38 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
-  Text,
-  TextInput
+  // Text, // Will use PaperText
+  // TextInput // Will use PaperTextInput
+  // Pressable // Will use Paper Button
 } from 'react-native';
+import {
+  Button,
+  Text as PaperText,
+  TextInput as PaperTextInput,
+  useTheme,
+} from 'react-native-paper';
 import { findUserByEmail, findUserByPhone, getDBConnection, initDatabase, User } from '../src/database';
+import { PaperThemeType } from '../src/styles/theme'; // Import theme type
 
 export default function LoginScreen() {
   const router = useRouter();
+  const theme = useTheme<PaperThemeType>(); // Use theme
+  const styles = getDynamicStyles(theme); // Generate styles with theme
+
   const [db, setDb] = useState<SQLiteDatabase | null>(null);
 
   const [identifier, setIdentifier] = useState(''); // Can be email or phone
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
+  // Initialize DB - useEffect remains the same
   useEffect(() => {
     const initializeDB = async () => {
       const connection = getDBConnection();
-      // Assuming initDatabase is idempotent and safe to call
       await initDatabase(connection);
       setDb(connection);
     };
@@ -80,107 +94,122 @@ export default function LoginScreen() {
         contentContainerStyle={styles.scrollViewContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Login</Text>
+        <PaperText variant="headlineLarge" style={styles.title}>Login</PaperText>
 
-        <TextInput
-        style={styles.input}
-        placeholder="Email or Phone"
-        value={identifier}
-        onChangeText={setIdentifier}
-        autoCapitalize="none"
-        keyboardType="email-address" // General enough for phone too
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        <PaperTextInput
+          label="Email or Phone"
+          value={identifier}
+          onChangeText={setIdentifier}
+          style={styles.input}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          mode="outlined"
+        />
+        <PaperTextInput
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          style={styles.input}
+          secureTextEntry
+          mode="outlined"
+        />
 
-      {message ? (
-        <Text style={[
-          styles.message,
-          message.startsWith('Login successful') ? styles.successMessage : styles.errorMessage
-        ]}>
-          {message}
-        </Text>
-      ) : null}
+        {message ? (
+          <PaperText style={[
+            styles.message,
+            message.startsWith('Login successful') ? styles.successMessage : styles.errorMessage
+          ]}
+          variant="bodyMedium"
+          >
+            {message}
+          </PaperText>
+        ) : null}
 
-      <Pressable style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </Pressable>
+        <Button
+          mode="contained"
+          onPress={handleLogin}
+          style={styles.button}
+          labelStyle={styles.buttonLabel} // For font theming if needed
+          // buttonColor={theme.colors.primary} // Usually handled by theme
+          // textColor={theme.colors.onPrimary} // Usually handled by theme
+        >
+          Login
+        </Button>
 
-      <Link href="/signup" style={styles.link}>
-        Don't have an account? Sign Up
-      </Link>
+        <Button
+            mode="text"
+            onPress={() => router.push('/signup')}
+            style={styles.linkButton}
+            // textColor={theme.colors.primary} // Usually handled by theme for text mode
+        >
+            Don't have an account? Sign Up
+        </Button>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const getDynamicStyles = (theme: PaperThemeType) => StyleSheet.create({
   keyboardAvoidingContainer: {
     flex: 1,
-    backgroundColor: '#f5f5f5', // Background color for the whole screen
+    backgroundColor: theme.colors.background,
   },
   scrollViewContent: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20, // Retain vertical padding
-    paddingHorizontal: 20, // Retain horizontal padding
+    paddingVertical: theme.SPACING.large,
+    paddingHorizontal: theme.SPACING.medium,
   },
-  // container style is removed as its properties are split or moved
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    // fontSize: 24, // From variant
+    // fontWeight: 'bold', // From variant
+    marginBottom: theme.SPACING.large,
     textAlign: 'center',
-    color: '#333',
+    color: theme.colors.primary, // Or theme.colors.text
   },
-  input: { // Input styles remain largely the same, width % works with alignItems: 'center'
-    width: '80%', // Width for input fields
-    height: 45, // Height for input fields
-    backgroundColor: '#fff',
-    paddingHorizontal: 10, // Adjusted padding
-    borderRadius: 5,  // Adjusted radius
-    marginBottom: 15, // Adjusted margin
-    borderWidth: 1,
-    borderColor: 'gray', // Standardized border color
-    fontSize: 16,
+  input: {
+    width: '90%', // Adjusted width
+    // height: 45, // PaperTextInput handles height
+    // backgroundColor: theme.colors.surface, // PaperTextInput handles background
+    // paddingHorizontal: 10, // PaperTextInput handles padding
+    // borderRadius: 5, // PaperTextInput handles radius via theme.roundness
+    marginBottom: theme.SPACING.medium,
+    // borderWidth: 1, // PaperTextInput handles border
+    // borderColor: 'gray', // PaperTextInput handles border color via theme
+    // fontSize: 16, // PaperTextInput handles font size
   },
   button: {
-    width: '80%',
-    backgroundColor: '#007bff',
-    paddingVertical: 12, // Adjusted padding
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginTop: 10,
-    alignItems: 'center', // Center text inside button
+    width: '90%',
+    // backgroundColor: theme.colors.primary, // Handled by mode="contained"
+    // paddingVertical: 12, // Paper Button has default padding
+    // paddingHorizontal: 20, // Paper Button has default padding
+    borderRadius: theme.BORDER_RADIUS.button, // Use theme border radius for buttons
+    marginTop: theme.SPACING.medium,
+    // alignItems: 'center', // Handled by Button
   },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  buttonLabel: { // Example if you need to override button text style
+    // fontFamily: theme.FONTS.medium, // if default button font is not desired
+    // fontSize: theme.FONTS.sizes.medium, // if default button font size is not desired
+    // fontWeight: 'bold', // if default button font weight is not desired
   },
   message: {
     textAlign: 'center',
-    marginTop: 15, // Adjusted from marginBottom
-    marginBottom: 10, // Added some bottom margin before button
-    fontSize: 16,
-    width: '80%', // Match input width
+    marginTop: theme.SPACING.medium,
+    marginBottom: theme.SPACING.small,
+    // fontSize: 16, // From variant
+    width: '90%',
   },
   errorMessage: {
-    color: 'red',
+    color: theme.colors.error,
   },
   successMessage: {
-    color: 'green',
+    color: theme.colors.success, // Assuming success color exists in theme
   },
-  link: {
-    marginTop: 20, // Keep margin for link
-    color: '#007bff',
-    textAlign: 'center',
-    fontSize: 16,
+  linkButton: { // Replaces link style
+    marginTop: theme.SPACING.medium,
+    // color: theme.colors.primary, // Handled by Button mode="text"
+    // textAlign: 'center', // Handled by Button
+    // fontSize: 16, // Handled by Button label style or default
   },
 });

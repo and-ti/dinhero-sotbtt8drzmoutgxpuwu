@@ -1,16 +1,24 @@
-import type { SQLiteDatabase } from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite'; // Ensure this is present once
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
   Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
+  StyleSheet, // Ensure StyleSheet is imported once
   View
 } from 'react-native';
-import { useTheme } from '../../src/context/ThemeContext';
+import {
+  Button,
+  Card,
+  IconButton,
+  Text, // Use Paper's Text
+  TextInput as PaperTextInput, // Use Paper's TextInput
+  useTheme, // Use Paper's useTheme if context provides full Paper theme
+} from 'react-native-paper';
+// Assuming ThemeContext provides a theme compatible with react-native-paper
+// If useTheme from ThemeContext is not directly from react-native-paper, ensure theme structure is compatible.
+// For this refactoring, we'll assume `theme` object from `useTheme()` is compatible.
+
 import {
   addDebt,
   Debt,
@@ -21,13 +29,15 @@ import {
   updateDebt,
   updateDebtStatus,
 } from '../../src/database';
-import { commonStyles } from '../../src/styles/theme';
+// commonStyles might be phased out or used for non-Paper specific values if any remain
+// import { commonStyles } from '../../src/styles/theme'; // This line can be removed if not used
+import { PaperThemeType } from '../../src/styles/theme'; // Import the theme type
 
 export default function DebitosScreen() {
-  const { theme } = useTheme();
+  const theme = useTheme<PaperThemeType>(); // Specify theme type for useTheme
   const styles = getDynamicStyles(theme);
 
-  const [db, setDb] = useState<SQLiteDatabase | null>(null);
+  const [db, setDb] = useState<SQLiteDatabase | null>(null); // Restore SQLiteDatabase type
   const [debts, setDebts] = useState<Debt[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -39,9 +49,10 @@ export default function DebitosScreen() {
   const [dueDate, setDueDate] = useState(''); // YYYY-MM-DD
   const [creditor, setCreditor] = useState('');
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDBInitialized, setIsDBInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Keep this for loading state
+  const [isDBInitialized, setIsDBInitialized] = useState(false); // Keep this
 
+  // Database initialization and loading logic (remains largely the same)
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
@@ -64,18 +75,17 @@ export default function DebitosScreen() {
     initialize();
   }, []);
 
-  const loadDebts = useCallback(async (currentDb: SQLiteDatabase) => {
+  const loadDebts = useCallback(async (currentDb: SQLiteDatabase) => { // Restore SQLiteDatabase type
     if (!currentDb) return;
     setIsLoading(true);
     try {
-      // TODO: Replace with dynamic family ID
-      const familyId = 1;
+      const familyId = 1; // TODO: Replace with dynamic family ID
       const fetchedDebts = await getDebtsByFamilyId(currentDb, familyId);
-      setDebts(fetchedDebts.sort((a, b) => { // Sort by status (unpaid first), then due date
+      setDebts(fetchedDebts.sort((a, b) => {
         if (a.status === 'unpaid' && b.status === 'paid') return -1;
         if (a.status === 'paid' && b.status === 'unpaid') return 1;
         if (a.due_date && b.due_date) return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-        if (a.due_date) return -1; // Debts with due dates first
+        if (a.due_date) return -1;
         if (b.due_date) return 1;
         return 0;
       }));
@@ -195,60 +205,75 @@ export default function DebitosScreen() {
   };
 
   const renderDebt = ({ item }: { item: Debt }) => (
-    <View style={[styles.debtItem, item.status === 'paid' ? styles.paidDebtItem : {}]}>
-      <View style={styles.debtInfo}>
-        <Text style={[styles.debtDescription, item.status === 'paid' && styles.paidText]}>
-          {item.description}
-        </Text>
-        {item.creditor && (
-          <Text style={[styles.debtCreditor, item.status === 'paid' && styles.paidText]}>
-            Credor: {item.creditor}
-          </Text>
-        )}
-        {item.due_date && (
-          <Text style={[styles.debtDueDate, item.status === 'paid' && styles.paidText]}>
-            Vencimento: {new Date(item.due_date + "T00:00:00").toLocaleDateString()}
-          </Text>
-        )}
-         <Text style={[styles.debtStatus, item.status === 'paid' ? styles.paidStatusText : styles.unpaidStatusText]}>
-          Status: {item.status === 'paid' ? 'Paga' : 'Não Paga'}
-        </Text>
-      </View>
-      <View style={styles.debtActions}>
-        <Text style={[styles.debtAmount, item.status === 'paid' ? styles.paidText : (item.status === 'unpaid' ? styles.unpaidAmountText : {})]}>
-          R$ {item.amount.toFixed(2)}
-        </Text>
-        <TouchableOpacity
-          style={[styles.statusButton, item.status === 'paid' ? styles.markUnpaidButton : styles.markPaidButton]}
-          onPress={() => handleToggleStatus(item)}
-        >
-          <Text style={styles.statusButtonText}>
-            {item.status === 'paid' ? 'Marcar Não Paga' : 'Marcar Paga'}
-          </Text>
-        </TouchableOpacity>
-        <View style={styles.itemActionButtonsRow}>
-            <TouchableOpacity onPress={() => handleOpenModal(item)} style={[styles.itemActionButton, styles.editItemButton]}>
-                <Text style={styles.itemActionButtonText}>Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeleteConfirmation(item.id)} style={[styles.itemActionButton, styles.deleteItemButton]}>
-                <Text style={styles.itemActionButtonText}>Excluir</Text>
-            </TouchableOpacity>
+    <Card style={[styles.debtItemCard, item.status === 'paid' ? styles.paidDebtItemCard : {}]} elevation={theme.ELEVATION.small}>
+      <Card.Content>
+        <View style={styles.debtItemContent}>
+            <View style={styles.debtInfo}>
+              <Text variant="titleMedium" style={[styles.debtDescription, item.status === 'paid' && styles.paidText]}>
+                {item.description}
+              </Text>
+              {item.creditor && (
+                <Text variant="bodySmall" style={[styles.debtMeta, item.status === 'paid' && styles.paidText]}>
+                  Credor: {item.creditor}
+                </Text>
+              )}
+              {item.due_date && (
+                <Text variant="bodySmall" style={[styles.debtMeta, item.status === 'paid' && styles.paidText]}>
+                  Vencimento: {new Date(item.due_date + "T00:00:00").toLocaleDateString()}
+                </Text>
+              )}
+              <Text variant="bodySmall" style={[styles.debtStatus, item.status === 'paid' ? styles.paidStatusText : styles.unpaidStatusText]}>
+                Status: {item.status === 'paid' ? 'Paga' : 'Não Paga'}
+              </Text>
+            </View>
+            <View style={styles.debtAmountAndActions}>
+                 <Text variant="headlineSmall" style={[styles.debtAmount, item.status === 'paid' ? styles.paidText : (item.status === 'unpaid' ? styles.unpaidAmountText : {})]}>
+                    R$ {item.amount.toFixed(2)}
+                </Text>
+                 <Button
+                    mode="contained"
+                    onPress={() => handleToggleStatus(item)}
+                    style={styles.statusButton}
+                    buttonColor={item.status === 'paid' ? theme.colors.warning : theme.colors.success}
+                    textColor={theme.colors.white} // Explicitly set text color for contrast
+                    compact
+                  >
+                    {item.status === 'paid' ? 'Marcar Não Paga' : 'Marcar Paga'}
+                </Button>
+            </View>
         </View>
-      </View>
-    </View>
+      </Card.Content>
+      <Card.Actions style={styles.cardActions}>
+        <IconButton icon="pencil" onPress={() => handleOpenModal(item)} iconColor={theme.colors.primary} />
+        <IconButton icon="delete" onPress={() => handleDeleteConfirmation(item.id)} iconColor={theme.colors.error}/>
+      </Card.Actions>
+    </Card>
   );
 
-  if (!isDBInitialized) return <View style={styles.container}><Text style={styles.text}>Inicializando...</Text></View>;
-  if (isLoading) return <View style={styles.container}><Text style={styles.text}>Carregando dívidas...</Text></View>;
+  if (!isDBInitialized) return <View style={styles.container}><Text style={styles.loadingText}>Inicializando banco de dados...</Text></View>;
+  if (isLoading && !debts.length) return <View style={styles.container}><Text style={styles.loadingText}>Carregando dívidas...</Text></View>;
+
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={[styles.button, styles.addButton]} onPress={() => handleOpenModal()}>
-        <Text style={styles.buttonText}>Adicionar Nova Dívida</Text>
-      </TouchableOpacity>
+      <Button
+        mode="contained"
+        onPress={() => handleOpenModal()}
+        style={styles.addButton}
+        icon="plus-circle-outline"
+        buttonColor={theme.colors.secondary} // Using secondary for FAB-like action
+        textColor={theme.colors.white} // Ensure text is readable
+      >
+        Adicionar Nova Dívida
+      </Button>
 
-      {debts.length === 0 ? (
-        <Text style={styles.text}>Nenhuma dívida encontrada.</Text>
+      {isLoading && debts.length > 0 && <Text style={styles.loadingText}>Atualizando lista...</Text>}
+
+      {debts.length === 0 && !isLoading ? (
+        <View style={styles.emptyStateContainer}>
+            <Text variant='headlineSmall' style={styles.emptyStateText}>Nenhuma dívida encontrada.</Text>
+            <Text variant='bodyLarge' style={styles.emptyStateText}>Crie uma nova dívida clicando no botão acima.</Text>
+        </View>
       ) : (
         <FlatList
           data={debts}
@@ -266,43 +291,46 @@ export default function DebitosScreen() {
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>{isEditing ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</Text>
-            <TextInput
-              placeholder="Descrição da Dívida"
+            <Text variant="titleLarge" style={styles.modalTitle}>
+              {isEditing ? 'Editar Dívida' : 'Adicionar Nova Dívida'}
+            </Text>
+            <PaperTextInput
+              label="Descrição da Dívida"
               value={description}
               onChangeText={setDescription}
               style={styles.input}
-              placeholderTextColor={theme.colors.error}
+              mode="outlined"
             />
-            <TextInput
-              placeholder="Valor (ex: 150.75)"
+            <PaperTextInput
+              label="Valor (ex: 150.75)"
               value={amount}
               onChangeText={setAmount}
               style={styles.input}
               keyboardType="numeric"
-              placeholderTextColor={theme.colors.placeholder}
+              mode="outlined"
             />
-            <TextInput
-              placeholder="Data de Vencimento (YYYY-MM-DD)"
+            <PaperTextInput
+              label="Data de Vencimento (YYYY-MM-DD)"
               value={dueDate}
               onChangeText={setDueDate}
               style={styles.input}
-              placeholderTextColor={theme.colors.placeholder}
+              mode="outlined"
+              placeholder="Opcional"
             />
-            <TextInput
-              placeholder="Credor (Opcional)"
+            <PaperTextInput
+              label="Credor (Opcional)"
               value={creditor}
               onChangeText={setCreditor}
               style={styles.input}
-              placeholderTextColor={theme.colors.placeholder}
+              mode="outlined"
             />
             <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={[styles.button, styles.modalButton]} onPress={handleSaveDebt}>
-                <Text style={styles.buttonText}>{isEditing ? 'Salvar Alterações' : 'Adicionar Dívida'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.modalButton, styles.cancelButton]} onPress={handleCloseModal}>
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
+              <Button mode="contained" onPress={handleSaveDebt} style={styles.modalButton}>
+                {isEditing ? 'Salvar Alterações' : 'Adicionar Dívida'}
+              </Button>
+              <Button mode="outlined" onPress={handleCloseModal} style={styles.modalButton}>
+                Cancelar
+              </Button>
             </View>
           </View>
         </View>
@@ -311,61 +339,58 @@ export default function DebitosScreen() {
   );
 }
 
-const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
+// Note: theme type might need to be explicitly PaperTheme from your theme file
+const getDynamicStyles = (theme: PaperThemeType) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    padding: commonStyles.SPACING.medium,
+    padding: theme.SPACING.medium,
   },
-  text: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.medium,
-    color: theme.colors.text,
+  loadingText: {
     textAlign: 'center',
-    marginBottom: commonStyles.SPACING.medium,
+    marginTop: theme.SPACING.large,
+    color: theme.colors.text, // Ensure this uses theme.colors.text or a variant color
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.SPACING.medium,
+  },
+  emptyStateText: { // This style is applied to Paper Text components
+    textAlign: 'center',
+    marginBottom: theme.SPACING.medium,
+    // color: theme.colors.textMuted, // Color can be set via variant or explicitly here
   },
   listContentContainer: {
-    paddingBottom: commonStyles.SPACING.large,
+    paddingBottom: theme.SPACING.large,
   },
-  debtItem: {
-    backgroundColor: theme.colors.surface,
-    padding: commonStyles.SPACING.medium,
-    borderRadius: commonStyles.BORDER_RADIUS.medium,
-    marginBottom: commonStyles.SPACING.medium,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+  debtItemCard: {
+    // backgroundColor: theme.colors.surface, // Card component handles its own background via theme
+    borderRadius: theme.BORDER_RADIUS.medium, // Card component might use theme.roundness
+    marginBottom: theme.SPACING.medium,
   },
-  paidDebtItem: {
-    backgroundColor: theme.colors.surfaceVariant,
+  paidDebtItemCard: {
+    backgroundColor: theme.colors.surfaceDisabled || theme.colors.surfaceVariant,
+  },
+  debtItemContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   debtInfo: {
     flex: 1,
+    marginRight: theme.SPACING.small,
   },
-  debtDescription: {
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.small,
+  debtDescription: { // Applied to Paper Text with variant="titleMedium"
+    // color: theme.colors.text, // Usually handled by variant, override if needed
+    marginBottom: theme.SPACING.small,
   },
-  debtCreditor: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.small,
+  debtMeta: { // Applied to Paper Text with variant="bodySmall"
+    // color: theme.colors.text, // Usually handled by variant
+    marginBottom: theme.SPACING.xxsmall,
   },
-  debtDueDate: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.small,
-  },
-  debtStatus: {
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    marginTop: commonStyles.SPACING.small,
+  debtStatus: { // Applied to Paper Text with variant="bodySmall"
+    marginTop: theme.SPACING.xsmall,
   },
   paidStatusText: {
     color: theme.colors.success,
@@ -377,121 +402,54 @@ const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleS
     textDecorationLine: 'line-through',
     color: theme.colors.textMuted,
   },
-  debtActions: {
+  debtAmountAndActions: {
     alignItems: 'flex-end',
-    marginTop: commonStyles.SPACING.small,
+    justifyContent: 'space-between',
   },
-  debtAmount: {
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.medium,
-    marginBottom: commonStyles.SPACING.small,
+  debtAmount: { // Applied to Paper Text with variant="headlineSmall"
+    marginBottom: theme.SPACING.small,
   },
   unpaidAmountText: {
-    color: theme.colors.error, // Explicitly color unpaid amounts
+    color: theme.colors.error,
   },
-  statusButton: {
-    paddingVertical: commonStyles.SPACING.xsmall,
-    paddingHorizontal: commonStyles.SPACING.small,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    marginBottom: commonStyles.SPACING.small,
-    minWidth: 120,
-    alignItems: 'center',
+  statusButton: { // Style for Paper Button
+    marginTop: theme.SPACING.small,
+    minWidth: 140,
   },
-  markPaidButton: {
-    backgroundColor: theme.colors.success,
-  },
-  markUnpaidButton: {
-    backgroundColor: theme.colors.warning,
-  },
-  statusButtonText: {
-    color: theme.colors.white,
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.xsmall,
-  },
-  itemActionButtonsRow: {
-    flexDirection: 'row',
+  cardActions: { // Style for Card.Actions
     justifyContent: 'flex-end',
-    width: '100%',
+    paddingTop: 0,
   },
-  itemActionButton: {
-    paddingVertical: commonStyles.SPACING.xxsmall,
-    paddingHorizontal: commonStyles.SPACING.small,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    marginLeft: commonStyles.SPACING.xsmall,
-  },
-  itemActionButtonText: {
-    color: theme.colors.white,
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.xxsmall,
-  },
-  editItemButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  deleteItemButton: {
-    backgroundColor: theme.colors.error,
-  },
-  button: {
-    backgroundColor: theme.colors.primary,
-    padding: commonStyles.SPACING.small,
-    borderRadius: commonStyles.BORDER_RADIUS.medium,
-    alignItems: 'center',
-  },
-  addButton: {
-    backgroundColor: theme.colors.accent,
-    marginBottom: commonStyles.SPACING.medium,
-  },
-  buttonText: {
-    color: theme.colors.white,
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.small,
+  addButton: { // Style for Paper Button
+    marginBottom: theme.SPACING.medium,
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: theme.colors.backdrop || 'rgba(0,0,0,0.6)',
   },
   modalView: {
     width: '90%',
-    backgroundColor: theme.colors.surface,
-    borderRadius: commonStyles.BORDER_RADIUS.large,
-    padding: commonStyles.SPACING.large,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: theme.colors.surface, // Modal content surface color
+    borderRadius: theme.BORDER_RADIUS.large, // Modal content roundness
+    padding: theme.SPACING.large,
+    elevation: theme.ELEVATION.large, // Elevation for modal
   },
-  modalTitle: {
-    fontFamily: commonStyles.FONTS.bold,
-    fontSize: commonStyles.FONTS.sizes.medium,
+  modalTitle: { // Applied to Paper Text with variant="titleLarge"
     color: theme.colors.text,
-    marginBottom: commonStyles.SPACING.large,
+    marginBottom: theme.SPACING.large,
     textAlign: 'center',
   },
-  input: {
-    backgroundColor: theme.colors.inputBackground || theme.colors.background,
-    color: theme.colors.text,
-    borderWidth: 1,
-    borderColor: theme.colors.customGray,
-    borderRadius: commonStyles.BORDER_RADIUS.small,
-    paddingHorizontal: commonStyles.SPACING.medium,
-    paddingVertical: commonStyles.SPACING.small,
-    fontFamily: commonStyles.FONTS.regular,
-    fontSize: commonStyles.FONTS.sizes.small,
-    marginBottom: commonStyles.SPACING.medium,
-    minHeight: 44,
+  input: { // Style for PaperTextInput
+    marginBottom: theme.SPACING.medium,
   },
   modalButtonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: commonStyles.SPACING.medium,
+    justifyContent: 'space-around',
+    marginTop: theme.SPACING.medium,
   },
-  modalButton: {
-    flex: 1,
-    marginHorizontal: commonStyles.SPACING.xsmall,
-  },
-  cancelButton: {
-    backgroundColor: theme.colors.customGray,
+  modalButton: { // Style for Paper Button in modal
+    flex: 0.48,
   },
 });

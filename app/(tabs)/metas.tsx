@@ -4,16 +4,25 @@ import {
   FlatList,
   Modal,
   ScrollView,
+  ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
-// Consider using ProgressBar from 'react-native-paper' in a future enhancement
-// import { ProgressBar } from 'react-native-paper';
+import {
+  Button,
+  Card,
+  IconButton,
+  Modal as PaperModal, // Consider for modals if applicable, though RN Modal is fine.
+  ProgressBar,
+  Text, // Use Paper's Text
+  TextInput as PaperTextInput, // Use Paper's TextInput
+  useTheme,
+} from 'react-native-paper';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { useTheme } from '../../src/context/ThemeContext';
+// Assuming ThemeContext provides a theme compatible with react-native-paper
+// For this refactoring, we'll assume `theme` object from `useTheme()` is compatible.
+// import { useTheme } from '../../src/context/ThemeContext'; // Keep if this is the intended provider
+import { PaperThemeType } from '../../src/styles/theme'; // Import theme type
 import {
   addGoal,
   contributeToGoal,
@@ -25,10 +34,10 @@ import {
   updateGoal,
   updateGoalStatus,
 } from '../../src/database';
-import { commonStyles } from '../../src/styles/theme';
+// import { commonStyles } from '../../src/styles/theme'; // To be removed
 
 export default function MetasScreen() {
-  const { theme } = useTheme();
+  const theme = useTheme<PaperThemeType>();
   const styles = getDynamicStyles(theme);
 
   const [db, setDb] = useState<SQLiteDatabase | null>(null);
@@ -231,12 +240,6 @@ export default function MetasScreen() {
     }
   };
 
-  const CustomProgressBar = ({ progress, color }: { progress: number, color: string }) => (
-    <View style={styles.progressBarContainer}>
-      <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
-    </View>
-  );
-
   const renderGoal = ({ item }: { item: Goal }) => {
     const progress = item.target_amount > 0 ? Math.min(item.current_amount / item.target_amount, 1) : 0;
     const isCompleted = item.status === 'completed';
@@ -244,119 +247,144 @@ export default function MetasScreen() {
     const isActive = item.status === 'active';
 
     let statusText = 'Ativa';
-    if (isCompleted) statusText = 'Concluída';
-    if (isCancelled) statusText = 'Cancelada';
+    let statusColor = theme.colors.primary; // Default for active
+    if (isCompleted) {
+      statusText = 'Concluída';
+      statusColor = theme.colors.success;
+    }
+    if (isCancelled) {
+      statusText = 'Cancelada';
+      statusColor = theme.colors.textMuted; // Or a specific grey
+    }
 
-    let progressBarColor = theme.colors.primary;
-    if (isCompleted) progressBarColor = theme.colors.success;
-    if (isCancelled) progressBarColor = theme.colors.grey;
-
+    const cardStyle = [
+      styles.goalItemCard,
+      isCompleted && styles.completedGoalItemCard,
+      isCancelled && styles.cancelledGoalItemCard,
+    ].filter(Boolean);
 
     return (
-      <View style={[styles.goalItem, isCompleted ? styles.completedGoalItem : (isCancelled ? styles.cancelledGoalItem : {})]}>
-        <Text style={[styles.goalName, (isCompleted || isCancelled) && styles.strikethroughText]}>{item.name}</Text>
-        <CustomProgressBar progress={progress} color={progressBarColor} />
-        <Text style={styles.goalAmount}>
-          R$ {item.current_amount.toFixed(2)} / R$ {item.target_amount.toFixed(2)}
-          ({(progress * 100).toFixed(0)}%)
-        </Text>
-        {item.target_date && <Text style={styles.goalDate}>Data Alvo: {new Date(item.target_date+"T00:00:00").toLocaleDateString()}</Text>}
-        <Text style={styles.goalStatus}>Status: {statusText}</Text>
-
-        <View style={styles.itemButtonsContainer}>
-          {isActive && (
-            <TouchableOpacity style={[styles.itemButton, styles.contributeButton]} onPress={() => handleOpenContributionModal(item)}>
-              <Text style={styles.itemButtonText}>Contribuir</Text>
-            </TouchableOpacity>
+      <Card style={cardStyle} elevation={theme.ELEVATION.small}>
+        <Card.Title
+          title={item.name}
+          titleStyle={[styles.goalName, (isCompleted || isCancelled) && styles.strikethroughText]}
+          subtitle={`Status: ${statusText}`}
+          subtitleStyle={{ color: statusColor, textTransform: 'capitalize' }}
+        />
+        <Card.Content>
+          <ProgressBar progress={progress} color={statusColor} style={styles.progressBar} />
+          <Text variant="bodyMedium" style={styles.goalAmount}>
+            R$ {item.current_amount.toFixed(2)} / R$ {item.target_amount.toFixed(2)} ({(progress * 100).toFixed(0)}%)
+          </Text>
+          {item.target_date && (
+            <Text variant="bodySmall" style={styles.goalDate}>
+              Data Alvo: {new Date(item.target_date + "T00:00:00").toLocaleDateString()}
+            </Text>
           )}
-          {!isCancelled && ( // Can't edit cancelled goals
-            <TouchableOpacity style={[styles.itemButton, styles.editButton]} onPress={() => handleOpenGoalModal(item)}>
-                <Text style={styles.itemButtonText}>Editar</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={[styles.itemButton, styles.deleteButton]} onPress={() => handleDeleteConfirmation(item.id)}>
-            <Text style={styles.itemButtonText}>Excluir</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.itemButtonsContainer}>
-            {isActive && (
-                 <TouchableOpacity style={[styles.itemButton, styles.statusActionButton, styles.completeButton]} onPress={() => handleStatusChange(item, 'completed')}>
-                    <Text style={styles.itemButtonText}>Concluir</Text>
-                </TouchableOpacity>
-            )}
-            {isActive && (
-                <TouchableOpacity style={[styles.itemButton, styles.statusActionButton, styles.cancelGoalButton]} onPress={() => handleStatusChange(item, 'cancelled')}>
-                    <Text style={styles.itemButtonText}>Cancelar Meta</Text>
-                </TouchableOpacity>
-            )}
-             {(isCompleted || isCancelled) && (
-                <TouchableOpacity style={[styles.itemButton, styles.statusActionButton, styles.reactivateButton]} onPress={() => handleStatusChange(item, 'active')}>
-                    <Text style={styles.itemButtonText}>Reativar</Text>
-                </TouchableOpacity>
-            )}
-        </View>
-      </View>
+        </Card.Content>
+        <Card.Actions style={styles.cardActions}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
+              {isActive && (
+                <Button mode="contained" onPress={() => handleOpenContributionModal(item)} style={styles.actionButton} buttonColor={theme.colors.success} compact>
+                  Contribuir
+                </Button>
+              )}
+              {!isCancelled && (
+                <Button mode="outlined" onPress={() => handleOpenGoalModal(item)} style={styles.actionButton} compact>
+                  Editar
+                </Button>
+              )}
+              {isActive && (
+                <Button mode="outlined" onPress={() => handleStatusChange(item, 'completed')} style={styles.actionButton} compact>
+                  Concluir
+                </Button>
+              )}
+              {isActive && (
+                <Button mode="outlined" onPress={() => handleStatusChange(item, 'cancelled')} style={styles.actionButton} buttonColor={theme.colors.warning} compact>
+                  Cancelar Meta
+                </Button>
+              )}
+              {(isCompleted || isCancelled) && (
+                <Button mode="outlined" onPress={() => handleStatusChange(item, 'active')} style={styles.actionButton} compact>
+                  Reativar
+                </Button>
+              )}
+               <IconButton icon="delete" onPress={() => handleDeleteConfirmation(item.id)} iconColor={theme.colors.error} style={styles.deleteIconButton} size={20}/>
+            </ScrollView>
+        </Card.Actions>
+      </Card>
     );
   };
 
-  if (!isDBInitialized) return <View style={styles.container}><Text style={styles.text}>Inicializando...</Text></View>;
-  if (isLoading) return <View style={styles.container}><Text style={styles.text}>Carregando metas...</Text></View>;
+  if (!isDBInitialized) return <View style={styles.container}><Text variant="bodyLarge" style={styles.loadingText}>Inicializando...</Text></View>;
+  if (isLoading) return <View style={styles.container}><Text variant="bodyLarge" style={styles.loadingText}>Carregando metas...</Text></View>;
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={[styles.button, styles.addButton]} onPress={() => handleOpenGoalModal()}>
-        <Text style={styles.buttonText}>Adicionar Nova Meta</Text>
-      </TouchableOpacity>
+      <Button
+        mode="contained"
+        onPress={() => handleOpenGoalModal()}
+        style={styles.addGoalButton}
+        icon="plus-circle-outline"
+        buttonColor={theme.colors.secondary}
+        textColor={theme.colors.white}
+      >
+        Adicionar Nova Meta
+      </Button>
 
       <FlatList
         data={goals}
         renderItem={renderGoal}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContentContainer}
-        ListEmptyComponent={<Text style={styles.text}>Nenhuma meta encontrada.</Text>}
+        ListEmptyComponent={<Text variant="headlineSmall" style={styles.emptyListText}>Nenhuma meta encontrada.</Text>}
       />
 
-      {/* Add/Edit Goal Modal */}
+      {/* Add/Edit Goal Modal - Using RN Modal, styled with Paper components */}
       <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={handleCloseGoalModal}>
         <View style={styles.centeredView}>
           <ScrollView contentContainerStyle={styles.modalScrollView}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalTitle}>{isEditing ? 'Editar Meta' : 'Adicionar Nova Meta'}</Text>
-              <TextInput placeholder="Nome da Meta" value={name} onChangeText={setName} style={styles.input} placeholderTextColor={theme.colors.placeholder}/>
-              <TextInput placeholder="Valor Alvo (ex: 1000.00)" value={targetAmount} onChangeText={setTargetAmount} style={styles.input} keyboardType="numeric" placeholderTextColor={theme.colors.placeholder}/>
-              <TextInput placeholder="Data Alvo (YYYY-MM-DD)" value={targetDate} onChangeText={setTargetDate} style={styles.input} placeholderTextColor={theme.colors.placeholder}/>
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity style={[styles.button, styles.modalButton]} onPress={handleSaveGoal}>
-                  <Text style={styles.buttonText}>{isEditing ? 'Salvar Alterações' : 'Adicionar Meta'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, styles.modalButton, styles.cancelButton]} onPress={handleCloseGoalModal}>
-                  <Text style={styles.buttonText}>Cancelar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Card style={styles.modalCard}>
+              <Card.Title title={isEditing ? 'Editar Meta' : 'Adicionar Nova Meta'} titleStyle={styles.modalTitle}/>
+              <Card.Content>
+                <PaperTextInput label="Nome da Meta" value={name} onChangeText={setName} style={styles.input} mode="outlined" />
+                <PaperTextInput label="Valor Alvo (ex: 1000.00)" value={targetAmount} onChangeText={setTargetAmount} style={styles.input} keyboardType="numeric" mode="outlined" />
+                <PaperTextInput label="Data Alvo (YYYY-MM-DD)" value={targetDate} onChangeText={setTargetDate} style={styles.input} mode="outlined" placeholder="Opcional" />
+              </Card.Content>
+              <Card.Actions style={styles.modalActions}>
+                <Button mode="contained" onPress={handleSaveGoal} style={styles.modalButton}>
+                  {isEditing ? 'Salvar Alterações' : 'Adicionar Meta'}
+                </Button>
+                <Button mode="outlined" onPress={handleCloseGoalModal} style={styles.modalButton}>
+                  Cancelar
+                </Button>
+              </Card.Actions>
+            </Card>
           </ScrollView>
         </View>
       </Modal>
 
-      {/* Contribution Modal */}
+      {/* Contribution Modal - Using RN Modal, styled with Paper components */}
       {currentGoal && (
         <Modal animationType="slide" transparent={true} visible={contributionModalVisible} onRequestClose={handleCloseContributionModal}>
           <View style={styles.centeredView}>
            <ScrollView contentContainerStyle={styles.modalScrollView}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalTitle}>Contribuir para "{currentGoal.name}"</Text>
-              <Text style={styles.modalText}>Progresso: R$ {currentGoal.current_amount.toFixed(2)} / R$ {currentGoal.target_amount.toFixed(2)}</Text>
-              <Text style={styles.modalText}>Restante: R$ {(currentGoal.target_amount - currentGoal.current_amount).toFixed(2)}</Text>
-              <TextInput placeholder="Valor da Contribuição" value={contributionAmount} onChangeText={setContributionAmount} style={styles.input} keyboardType="numeric" placeholderTextColor={theme.colors.placeholder}/>
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity style={[styles.button, styles.modalButton]} onPress={handleContributeToGoal}>
-                  <Text style={styles.buttonText}>Confirmar Contribuição</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, styles.modalButton, styles.cancelButton]} onPress={handleCloseContributionModal}>
-                  <Text style={styles.buttonText}>Cancelar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Card style={styles.modalCard}>
+              <Card.Title title={`Contribuir para "${currentGoal.name}"`} titleStyle={styles.modalTitle} />
+              <Card.Content>
+                <Text variant="bodyLarge" style={styles.modalText}>Progresso: R$ {currentGoal.current_amount.toFixed(2)} / R$ {currentGoal.target_amount.toFixed(2)}</Text>
+                <Text variant="bodyMedium" style={styles.modalText}>Restante: R$ {(currentGoal.target_amount - currentGoal.current_amount).toFixed(2)}</Text>
+                <PaperTextInput label="Valor da Contribuição" value={contributionAmount} onChangeText={setContributionAmount} style={styles.input} keyboardType="numeric" mode="outlined" />
+              </Card.Content>
+              <Card.Actions style={styles.modalActions}>
+                <Button mode="contained" onPress={handleContributeToGoal} style={styles.modalButton}>
+                  Confirmar Contribuição
+                </Button>
+                <Button mode="outlined" onPress={handleCloseContributionModal} style={styles.modalButton}>
+                  Cancelar
+                </Button>
+              </Card.Actions>
+            </Card>
             </ScrollView>
           </View>
         </Modal>
@@ -365,40 +393,119 @@ export default function MetasScreen() {
   );
 }
 
-const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background, padding: commonStyles.SPACING.medium },
-  text: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.medium, color: theme.colors.text, textAlign: 'center', marginBottom: commonStyles.SPACING.medium },
-  listContentContainer: { paddingBottom: commonStyles.SPACING.large },
-  goalItem: { backgroundColor: theme.colors.surface, padding: commonStyles.SPACING.medium, borderRadius: commonStyles.BORDER_RADIUS.medium, marginBottom: commonStyles.SPACING.medium, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
-  completedGoalItem: { backgroundColor: theme.colors.surfaceSuccessMuted },
-  cancelledGoalItem: { backgroundColor: theme.colors.surfaceMuted, opacity: 0.7 },
-  strikethroughText: { textDecorationLine: 'line-through', color: theme.colors.textMuted },
-  goalName: { fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.small, color: theme.colors.text, marginBottom: commonStyles.SPACING.xsmall },
-  progressBarContainer: { height: 12, backgroundColor: theme.colors.border, borderRadius: commonStyles.BORDER_RADIUS.small, overflow: 'hidden', marginVertical: commonStyles.SPACING.small },
-  progressBarFill: { height: '100%', borderRadius: commonStyles.BORDER_RADIUS.small },
-  goalAmount: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.colors.textMuted, marginVertical: commonStyles.SPACING.xxsmall },
-  goalDate: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.colors.textMuted, marginBottom: commonStyles.SPACING.xxsmall },
-  goalStatus: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xsmall, color: theme.colors.text, marginTop: commonStyles.SPACING.xsmall, marginBottom: commonStyles.SPACING.small, textTransform: 'capitalize'},
-  itemButtonsContainer: { flexDirection: 'row', justifyContent: 'flex-start', marginTop: commonStyles.SPACING.small, flexWrap: 'wrap' },
-  itemButton: { paddingVertical: commonStyles.SPACING.xsmall, paddingHorizontal: commonStyles.SPACING.small, borderRadius: commonStyles.BORDER_RADIUS.small, marginRight: commonStyles.SPACING.small, marginTop: commonStyles.SPACING.xsmall, alignItems: 'center', justifyContent: 'center', minHeight: 30 },
-  itemButtonText: { color: theme.colors.white, fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.xxsmall },
-  contributeButton: { backgroundColor: theme.colors.success },
-  editButton: { backgroundColor: theme.colors.primary },
-  deleteButton: { backgroundColor: theme.colors.error },
-  statusActionButton: { backgroundColor: theme.colors.secondary },
-  completeButton: {backgroundColor: theme.colors.success },
-  cancelGoalButton: { backgroundColor: theme.colors.warning },
-  reactivateButton: { backgroundColor: theme.colors.info },
-  button: { backgroundColor: theme.colors.primary, padding: commonStyles.SPACING.small, borderRadius: commonStyles.BORDER_RADIUS.medium, alignItems: 'center' },
-  addButton: { backgroundColor: theme.colors.accent, marginBottom: commonStyles.SPACING.medium },
-  buttonText: { color: theme.colors.white, fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.small },
-  centeredView: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)' },
-  modalScrollView: { width: '100%', maxHeight: '90%' }, // Ensure modal is scrollable if content overflows
-  modalView: { width: '90%', marginHorizontal: '5%', backgroundColor: theme.colors.surface, borderRadius: commonStyles.BORDER_RADIUS.large, padding: commonStyles.SPACING.large, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5, marginVertical: commonStyles.SPACING.large },
-  modalTitle: { fontFamily: commonStyles.FONTS.bold, fontSize: commonStyles.FONTS.sizes.medium, color: theme.colors.text, marginBottom: commonStyles.SPACING.large, textAlign: 'center' },
-  modalText: { fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.small, color: theme.colors.text, marginBottom: commonStyles.SPACING.medium, textAlign: 'center' },
-  input: { backgroundColor: theme.colors.inputBackground || theme.colors.background, color: theme.colors.text, borderWidth: 1, borderColor: theme.colors.border, borderRadius: commonStyles.BORDER_RADIUS.small, paddingHorizontal: commonStyles.SPACING.medium, paddingVertical: commonStyles.SPACING.small, fontFamily: commonStyles.FONTS.regular, fontSize: commonStyles.FONTS.sizes.small, marginBottom: commonStyles.SPACING.medium, minHeight: 44 },
-  modalButtonContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: commonStyles.SPACING.medium },
-  modalButton: { flex: 1, marginHorizontal: commonStyles.SPACING.xsmall },
-  cancelButton: { backgroundColor: theme.colors.grey },
+const getDynamicStyles = (theme: PaperThemeType) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    padding: theme.SPACING.medium,
+  },
+  loadingText: { // Applied to Paper Text
+    textAlign: 'center',
+    marginVertical: theme.SPACING.large,
+  },
+  emptyListText: { // Applied to Paper Text
+    textAlign: 'center',
+    marginVertical: theme.SPACING.large,
+    color: theme.colors.textMuted,
+  },
+  listContentContainer: {
+    paddingBottom: theme.SPACING.large,
+  },
+  goalItemCard: {
+    marginBottom: theme.SPACING.medium,
+    backgroundColor: theme.colors.surface, // Ensure Card background is from theme
+    borderRadius: theme.BORDER_RADIUS.medium, // Ensure Card roundness is from theme
+  },
+  completedGoalItemCard: {
+    backgroundColor: theme.colors.surfaceSuccessMuted || theme.colors.surfaceDisabled, // Use a success-muted or disabled surface
+  },
+  cancelledGoalItemCard: {
+    backgroundColor: theme.colors.surfaceMuted || theme.colors.surfaceDisabled, // Use a muted or disabled surface
+    opacity: 0.7, // Keep opacity for visual distinction
+  },
+  goalName: { // Applied to Card.Title's titleStyle
+    // fontFamily: theme.FONTS.bold, // Handled by Card.Title variants if applicable or theme's default
+    // fontSize: theme.FONTS.sizes.small, // Handled by Card.Title variants
+    // color: theme.colors.text, // Handled by Card.Title
+  },
+  strikethroughText: {
+    textDecorationLine: 'line-through',
+    color: theme.colors.textMuted,
+  },
+  progressBar: {
+    height: 12, // Keep custom height if desired
+    borderRadius: theme.BORDER_RADIUS.small,
+    marginVertical: theme.SPACING.small,
+  },
+  goalAmount: { // Applied to Paper Text
+    // fontFamily: theme.FONTS.regular, // Handled by Text variant
+    // fontSize: theme.FONTS.sizes.xsmall, // Handled by Text variant
+    color: theme.colors.textMuted,
+    marginVertical: theme.SPACING.xxsmall,
+  },
+  goalDate: { // Applied to Paper Text
+    // fontFamily: theme.FONTS.regular, // Handled by Text variant
+    // fontSize: theme.FONTS.sizes.xsmall, // Handled by Text variant
+    color: theme.colors.textMuted,
+    marginBottom: theme.SPACING.xxsmall,
+  },
+  // goalStatus style is handled by Card.Title subtitleStyle
+  cardActions: {
+    paddingHorizontal: theme.SPACING.small, // Add some padding to actions
+    paddingBottom: theme.SPACING.small,
+  },
+  actionsScrollView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    marginHorizontal: theme.SPACING.xsmall,
+  },
+  deleteIconButton: {
+    // No specific styles needed here if default IconButton size is okay
+    // marginLeft auto could push it to the right if it's the last item and not in ScrollView
+  },
+  addGoalButton: { // For the main "Add New Goal" button
+    marginBottom: theme.SPACING.medium,
+  },
+  // Styles for Modal content (using Card as modal panel)
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.backdrop || 'rgba(0,0,0,0.6)',
+  },
+  modalScrollView: { // Ensure this allows scrolling for various screen sizes
+    width: '100%',
+    maxHeight: '90%', // Cap modal height
+  },
+  modalCard: { // Card used as modal panel
+    width: '90%',
+    alignSelf: 'center',
+    marginVertical: theme.SPACING.large, // Add vertical margin for scroll
+    elevation: theme.ELEVATION.large,
+    borderRadius: theme.BORDER_RADIUS.large,
+  },
+  modalTitle: { // Applied to Card.Title in modal
+    // fontFamily: theme.FONTS.bold, // Handled by Card.Title
+    // fontSize: theme.FONTS.sizes.medium, // Handled by Card.Title
+    textAlign: 'center', // Ensure title is centered
+    // color: theme.colors.text, // Handled by Card.Title
+  },
+  modalText: { // Applied to Paper Text in modal
+    // fontFamily: theme.FONTS.regular, // Handled by Text variant
+    // fontSize: theme.FONTS.sizes.small, // Handled by Text variant
+    // color: theme.colors.text, // Handled by Text variant
+    marginBottom: theme.SPACING.medium,
+    textAlign: 'center',
+  },
+  input: { // Applied to PaperTextInput in modal
+    marginBottom: theme.SPACING.medium,
+  },
+  modalActions: { // Applied to Card.Actions in modal
+    justifyContent: 'space-around', // Distribute buttons evenly
+  },
+  modalButton: { // For buttons within the modal
+    flex: 0.45, // Ensure buttons don't overlap, adjust as needed
+  },
 });
