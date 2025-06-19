@@ -8,10 +8,11 @@ import { IconButton } from 'react-native-paper';
 import { useTheme } from '../../src/context/ThemeContext';
 
 // Define a simple loading component, can be shared or local
-const TabLoadingIndicator = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F2F2F7' }}>
-    {/* Using a default light background, assuming tabs might not have their own background initially */}
-    <ActivityIndicator size="large" />
+// Now accepts theme to avoid hardcoded background
+const TabLoadingIndicator = ({ backgroundColor }: { backgroundColor?: string }) => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: backgroundColor || '#FFFFFF' }}>
+    {/* Fallback to white if no background color is provided */}
+    <ActivityIndicator size="large" color={backgroundColor ? (backgroundColor === '#000000' || backgroundColor === '#000' ? '#FFFFFF' : '#000000') : '#000000'} />
   </View>
 );
 
@@ -19,7 +20,9 @@ export default function TabLayout() {
   const { theme, isThemeReady } = useTheme(); // Destructure isThemeReady
 
   if (!isThemeReady) {
-    return <TabLoadingIndicator />;
+    // Try to provide a sensible default background for the initial loading state
+    // This is a guess; if theme takes long to load, this might be briefly visible.
+    return <TabLoadingIndicator backgroundColor={theme?.colors?.background} />;
   }
 
   // Secondary checks for properties used directly by TabLayout
@@ -36,7 +39,8 @@ export default function TabLayout() {
     typeof theme.FONTS.sizes === 'undefined'
   ) {
     console.error("TabLayout: ThemeContext reported theme as ready, but critical properties for Tabs are missing.", theme);
-    return <TabLoadingIndicator />; // Fallback to loading indicator
+    // Pass the current theme's background if available, even if other parts are missing
+    return <TabLoadingIndicator backgroundColor={theme?.colors?.background} />;
   }
 
   return (
@@ -88,10 +92,10 @@ export default function TabLayout() {
             return (
               <IconButton
                 icon="account-circle-outline"
-                iconColor={theme.colors.onSurfaceVariant}
-                size={25}
+                iconColor={theme.colors.onSurfaceVariant} // Already themed
+                size={25} // Size is a layout choice
                 onPress={() => router.push('/settings')}
-                style={{ marginRight: 10 }}
+                style={{ marginRight: 10 }} // Margin is a layout choice
               />
             );
           },

@@ -1,26 +1,33 @@
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { type SQLiteDatabase } from 'expo-sqlite';
 import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
-  StyleSheet,
-  Text,
-  TextInput
+  StyleSheet
 } from 'react-native';
+import {
+  Button,
+  Text as PaperText,
+  TextInput as PaperTextInput,
+  useTheme,
+} from 'react-native-paper';
 import { addFamily, addUser, findFamilyByName, getDBConnection, initDatabase } from '../src/database';
+import { PaperThemeType } from '../src/styles/theme'; // Import theme type
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const theme = useTheme<PaperThemeType>(); // Use theme
+  const styles = getDynamicStyles(theme); // Generate styles with theme
+
   const [db, setDb] = useState<SQLiteDatabase | null>(null);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [familyName, setFamilyName] = useState(''); // New state for Family Name
+  const [familyName, setFamilyName] = useState('');
   const [message, setMessage] = useState('');
 
   const handleFullNameChange = (text: string) => {
@@ -108,131 +115,125 @@ export default function SignUpScreen() {
         contentContainerStyle={styles.scrollViewContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Create Account</Text>
+        <PaperText variant="headlineLarge" style={styles.title}>Create Account</PaperText>
 
-        <TextInput
-        style={styles.input}
-        placeholder="Full Name (e.g., John Doe)"
-        value={name}
-        onChangeText={handleFullNameChange} // Use the new handler
-        autoCapitalize="words"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Family Name (Optional, auto-filled)"
-        value={familyName}
-        onChangeText={setFamilyName} // Allow direct editing
-        autoCapitalize="words"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Phone (Optional)"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        <PaperTextInput
+          label="Full Name (e.g., John Doe)"
+          value={name}
+          onChangeText={handleFullNameChange}
+          style={styles.input}
+          autoCapitalize="words"
+          mode="outlined"
+        />
+        <PaperTextInput
+          label="Family Name (Optional, auto-filled)"
+          value={familyName}
+          onChangeText={setFamilyName}
+          style={styles.input}
+          autoCapitalize="words"
+          mode="outlined"
+        />
+        <PaperTextInput
+          label="Phone (Optional)"
+          value={phone}
+          onChangeText={setPhone}
+          style={styles.input}
+          keyboardType="phone-pad"
+          mode="outlined"
+        />
+        <PaperTextInput
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          mode="outlined"
+        />
+        <PaperTextInput
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          style={styles.input}
+          secureTextEntry
+          mode="outlined"
+        />
 
-      {message ? (
-        <Text style={[
-          styles.message,
-          message.startsWith('Account created successfully') ? styles.successMessage : styles.errorMessage
-        ]}>
-          {message}
-        </Text>
-      ) : null}
+        {message ? (
+          <PaperText style={[
+            styles.message,
+            message.startsWith('Account created successfully') ? styles.successMessage : styles.errorMessage
+          ]}
+          variant="bodyMedium"
+          >
+            {message}
+          </PaperText>
+        ) : null}
 
-      <Pressable style={styles.button} onPress={handleSignUp}>
-        <Text style={styles.buttonText}>Sign Up</Text>
-      </Pressable>
+        <Button
+          mode="contained"
+          onPress={handleSignUp}
+          style={styles.button}
+          labelStyle={styles.buttonLabel}
+        >
+          Sign Up
+        </Button>
 
-      <Link href="/login" style={styles.loginLink}>
-        <Text style={styles.loginLinkText}>Already have an account? Login</Text>
-      </Link>
+        <Button
+            mode="text"
+            onPress={() => router.replace('/login')} // Use replace to avoid back to signup
+            style={styles.linkButton}
+        >
+            Already have an account? Login
+        </Button>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const getDynamicStyles = (theme: PaperThemeType) => StyleSheet.create({
   keyboardAvoidingContainer: {
     flex: 1,
-    backgroundColor: '#f5f5f5', // Background for the KAV
+    backgroundColor: theme.colors.background,
   },
   scrollViewContent: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20, // Keep padding for content within scroll view
-    paddingHorizontal: 20,
+    paddingVertical: theme.SPACING.large,
+    paddingHorizontal: theme.SPACING.medium,
   },
-  // container style is removed as its properties are split or moved
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: theme.SPACING.large,
     textAlign: 'center',
-    color: '#333',
+    color: theme.colors.primary,
   },
-  input: { // Input styles remain largely the same
-    width: '80%', // Width for input fields
-    height: 45, // Height for input fields
-    backgroundColor: '#fff',
-    paddingHorizontal: 10, // Adjusted padding
-    borderRadius: 5,  // Adjusted radius
-    marginBottom: 15, 
-    borderWidth: 1,
-    borderColor: 'gray', // Standardized border color
-    fontSize: 16,
+  input: {
+    width: '90%',
+    marginBottom: theme.SPACING.medium,
   },
   button: {
-    width: '80%',
-    backgroundColor: '#007bff', // Standard blue
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginTop: 10,
-    alignItems: 'center',
+    width: '90%',
+    borderRadius: theme.BORDER_RADIUS.button,
+    marginTop: theme.SPACING.medium,
   },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  buttonLabel: {
+    // fontFamily: theme.FONTS.medium, // Optional: if default button font needs override
+    // fontWeight: 'bold',
   },
   message: {
     textAlign: 'center',
-    marginTop: 15, 
-    marginBottom: 10, 
-    fontSize: 16,
-    width: '80%',
+    marginTop: theme.SPACING.medium,
+    marginBottom: theme.SPACING.small,
+    width: '90%',
   },
   errorMessage: {
-    color: 'red',
+    color: theme.colors.error,
   },
   successMessage: {
-    color: 'green',
+    color: theme.colors.success,
   },
-  loginLink: {
-    marginTop: 20, // Adjusted from 15 to provide a bit more space from button
-    padding: 5, // Add some padding to make it easier to press
-  },
-  loginLinkText: {
-    color: '#007bff',
-    textAlign: 'center',
-    fontSize: 16, // Match other text where appropriate
+  linkButton: {
+    marginTop: theme.SPACING.medium,
   },
 });

@@ -1,8 +1,8 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from "react-native"; // View might still be needed for some layout
-import { ActivityIndicator, Card, Text as PaperText, ProgressBar } from 'react-native-paper';
-import { useTheme } from '../../src/context/ThemeContext';
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Card, Text as PaperText, ProgressBar, useTheme } from 'react-native-paper';
+// Removed useTheme from context, assuming Paper's useTheme is now standard
 import {
   Budget,
   Debt,
@@ -14,7 +14,7 @@ import {
   Goal,
   initDatabase
 } from '../../src/database';
-import { commonStyles } from '../../src/styles/theme'; // Keep for SPACING, BORDER_RADIUS if not using theme's directly
+import { PaperThemeType } from '../../src/styles/theme'; // Import PaperThemeType
 
 // Types remain the same
 interface MonthlySummary {
@@ -27,13 +27,11 @@ interface BudgetWithSpending extends Budget {
   spentAmount: number;
 }
 
-// CustomProgressBar is removed, will use Paper.ProgressBar
-
 export default function DashboardScreen() {
-  const { theme } = useTheme(); // theme is now PaperThemeType
+  const theme = useTheme<PaperThemeType>(); // Use Paper's useTheme with type
   const styles = getDynamicStyles(theme);
 
-  // State hooks remain the same
+  // State hooks
   const [db, setDb] = useState<SQLiteDatabase | null>(null);
   const [summaryData, setSummaryData] = useState<MonthlySummary | null>(null);
   const [activeBudgets, setActiveBudgets] = useState<BudgetWithSpending[]>([]);
@@ -107,163 +105,158 @@ export default function DashboardScreen() {
 
 
   if (!isDBInitialized) {
-    return <View style={styles.centered}><ActivityIndicator animating={true} color={theme.colors.primary} size="large" /><PaperText style={styles.loadingText}>Inicializando banco de dados...</PaperText></View>;
+    return <View style={styles.centered}><ActivityIndicator animating={true} color={theme.colors.primary} size="large" /><PaperText style={styles.loadingText} variant="bodyLarge">Inicializando banco de dados...</PaperText></View>;
   }
   if (isLoading) {
-    return <View style={styles.centered}><ActivityIndicator animating={true} color={theme.colors.primary} size="large" /><PaperText style={styles.loadingText}>Carregando dashboard...</PaperText></View>;
+    return <View style={styles.centered}><ActivityIndicator animating={true} color={theme.colors.primary} size="large" /><PaperText style={styles.loadingText} variant="bodyLarge">Carregando dashboard...</PaperText></View>;
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <PaperText variant="headlineMedium" style={styles.headerTitle}>Painel Financeiro</PaperText>
 
       {/* Resumo Mensal */}
-      <Card style={styles.sectionCard} elevation={1}>
+      <Card style={styles.sectionCard} elevation={theme.ELEVATION.small}>
         <Card.Content>
           <PaperText variant="titleMedium" style={styles.sectionTitle}>Resumo Mensal</PaperText>
           {summaryData ? (
             <>
-              <PaperText style={[styles.summaryText, styles.incomeText]}>Receitas: R$ {summaryData.income.toFixed(2)}</PaperText>
-              <PaperText style={[styles.summaryText, styles.expenseText]}>Despesas: R$ {summaryData.expenses.toFixed(2)}</PaperText>
-              <PaperText style={[styles.summaryText, styles.netText]}>Saldo: R$ {summaryData.net.toFixed(2)}</PaperText>
+              <PaperText variant="bodyMedium" style={[styles.summaryText, styles.incomeText]}>Receitas: R$ {summaryData.income.toFixed(2)}</PaperText>
+              <PaperText variant="bodyMedium" style={[styles.summaryText, styles.expenseText]}>Despesas: R$ {summaryData.expenses.toFixed(2)}</PaperText>
+              <PaperText variant="bodyLarge" style={[styles.summaryText, styles.netText]}>Saldo: R$ {summaryData.net.toFixed(2)}</PaperText>
             </>
-          ) : <PaperText style={styles.text}>Calculando resumo...</PaperText>}
+          ) : <PaperText style={styles.placeholderText}>Calculando resumo...</PaperText>}
         </Card.Content>
       </Card>
 
       {/* Orçamentos Ativos */}
-      <Card style={styles.sectionCard} elevation={1}>
+      <Card style={styles.sectionCard} elevation={theme.ELEVATION.small}>
         <Card.Content>
           <PaperText variant="titleMedium" style={styles.sectionTitle}>Orçamentos Ativos</PaperText>
           {activeBudgets.length > 0 ? activeBudgets.map(budget => {
             const progress = budget.amount > 0 ? Math.min(budget.spentAmount / budget.amount, 1) : 0;
             return (
               <View key={budget.id} style={styles.listItem}>
-                <PaperText variant="labelLarge" style={styles.itemTextBold}>{budget.name}</PaperText>
-                <PaperText style={styles.itemText}>Gasto: R$ {budget.spentAmount.toFixed(2)} de R$ {budget.amount.toFixed(2)}</PaperText>
+                <PaperText variant="labelLarge" style={styles.itemTextEmphasis}>{budget.name}</PaperText>
+                <PaperText variant="bodySmall" style={styles.itemTextSecondary}>Gasto: R$ {budget.spentAmount.toFixed(2)} de R$ {budget.amount.toFixed(2)}</PaperText>
                 <ProgressBar progress={progress} color={theme.colors.primary} style={styles.progressBar} />
               </View>
             );
-          }) : <PaperText style={styles.text}>Nenhum orçamento ativo.</PaperText>}
+          }) : <PaperText style={styles.placeholderText}>Nenhum orçamento ativo.</PaperText>}
         </Card.Content>
       </Card>
 
       {/* Dívidas Pendentes */}
-      <Card style={styles.sectionCard} elevation={1}>
+      <Card style={styles.sectionCard} elevation={theme.ELEVATION.small}>
         <Card.Content>
           <PaperText variant="titleMedium" style={styles.sectionTitle}>Dívidas Pendentes</PaperText>
           {outstandingDebts.length > 0 ? outstandingDebts.map(debt => (
             <View key={debt.id} style={styles.listItem}>
-              <PaperText variant="labelLarge" style={styles.itemTextBold}>{debt.description}</PaperText>
-              <PaperText style={styles.itemText}>Valor: R$ {debt.amount.toFixed(2)} {debt.due_date ? `- Vence: ${new Date(debt.due_date+"T00:00:00").toLocaleDateString()}` : ''}</PaperText>
+              <PaperText variant="labelLarge" style={styles.itemTextEmphasis}>{debt.description}</PaperText>
+              <PaperText variant="bodySmall" style={styles.itemTextSecondary}>Valor: R$ {debt.amount.toFixed(2)} {debt.due_date ? `- Vence: ${new Date(debt.due_date+"T00:00:00").toLocaleDateString()}` : ''}</PaperText>
             </View>
-          )) : <PaperText style={styles.text}>Nenhuma dívida pendente. 🎉</PaperText>}
+          )) : <PaperText style={styles.placeholderText}>Nenhuma dívida pendente. 🎉</PaperText>}
         </Card.Content>
       </Card>
 
       {/* Metas em Andamento */}
-      <Card style={styles.sectionCard} elevation={1}>
+      <Card style={styles.sectionCard} elevation={theme.ELEVATION.small}>
         <Card.Content>
           <PaperText variant="titleMedium" style={styles.sectionTitle}>Metas em Andamento</PaperText>
           {activeGoals.length > 0 ? activeGoals.map(goal => {
             const progress = goal.target_amount > 0 ? Math.min(goal.current_amount / goal.target_amount, 1) : 0;
             return (
               <View key={goal.id} style={styles.listItem}>
-                <PaperText variant="labelLarge" style={styles.itemTextBold}>{goal.name}</PaperText>
-                <PaperText style={styles.itemText}>Progresso: R$ {goal.current_amount.toFixed(2)} de R$ {goal.target_amount.toFixed(2)}</PaperText>
+                <PaperText variant="labelLarge" style={styles.itemTextEmphasis}>{goal.name}</PaperText>
+                <PaperText variant="bodySmall" style={styles.itemTextSecondary}>Progresso: R$ {goal.current_amount.toFixed(2)} de R$ {goal.target_amount.toFixed(2)}</PaperText>
                 <ProgressBar progress={progress} color={theme.colors.secondary} style={styles.progressBar} />
               </View>
             );
-          }) : <PaperText style={styles.text}>Nenhuma meta em andamento.</PaperText>}
+          }) : <PaperText style={styles.placeholderText}>Nenhuma meta em andamento.</PaperText>}
         </Card.Content>
       </Card>
     </ScrollView>
   );
 }
 
-const getDynamicStyles = (theme: ReturnType<typeof useTheme>['theme']) => StyleSheet.create({
+const getDynamicStyles = (theme: PaperThemeType) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  contentContainer: { // Added for ScrollView padding
+    paddingBottom: theme.SPACING.medium, // Ensure space at the bottom
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.colors.background,
-    padding: commonStyles.SPACING.medium,
+    padding: theme.SPACING.medium,
   },
-  loadingText: { // For text next to ActivityIndicator
-    marginTop: commonStyles.SPACING.small,
+  loadingText: {
+    marginTop: theme.SPACING.small,
     color: theme.colors.onBackground,
-    fontSize: commonStyles.FONTS.sizes.medium,
+    // fontSize: theme.FONTS.sizes.medium, // Handled by variant
   },
   headerTitle: {
-    // fontSize: commonStyles.FONTS.sizes.xlarge, // Handled by variant
-    // fontFamily: commonStyles.FONTS.bold, // Handled by variant
     color: theme.colors.primary,
     textAlign: 'center',
-    marginVertical: commonStyles.SPACING.medium,
-    // fontWeight: 'bold', // If variant doesn't provide enough weight
+    marginVertical: theme.SPACING.large, // Increased vertical margin
+    paddingHorizontal: theme.SPACING.medium, // Added horizontal padding
   },
   sectionCard: {
     // backgroundColor: theme.colors.surface, // Handled by Card
-    // borderRadius: theme.roundness, // Handled by Card theme
-    padding: commonStyles.SPACING.small, // Adjusted padding for Card.Content
-    marginBottom: commonStyles.SPACING.medium,
-    marginHorizontal: commonStyles.SPACING.medium,
-    // elevation: 1, // Set on Card component directly
+    // borderRadius: theme.roundness, // Handled by Card theme, consider theme.BORDER_RADIUS.medium for consistency
+    borderRadius: theme.BORDER_RADIUS.large, // Explicitly using larger radius
+    // padding: theme.SPACING.small, // Card.Content handles padding, this might be extra
+    marginBottom: theme.SPACING.large, // Increased bottom margin
+    marginHorizontal: theme.SPACING.medium,
+    // elevation: theme.ELEVATION.small, // Passed as prop
   },
   sectionTitle: {
-    // fontSize: commonStyles.FONTS.sizes.large, // Handled by variant
-    // fontFamily: commonStyles.FONTS.bold, // Handled by variant
-    color: theme.colors.onSurface, // Text on Card
-    marginBottom: commonStyles.SPACING.small,
+    color: theme.colors.onSurface,
+    marginBottom: theme.SPACING.medium, // Increased margin
   },
   summaryText: {
-    // fontFamily: commonStyles.FONTS.regular, // Handled by PaperText default or variant
-    // fontSize: commonStyles.FONTS.sizes.medium, // Handled by PaperText default or variant
-    color: theme.colors.onSurface, // Text on Card
-    marginBottom: commonStyles.SPACING.xxsmall || 4, // Ensure xxsmall is defined
+    color: theme.colors.onSurface,
+    marginBottom: theme.SPACING.small, // Increased margin
   },
-  incomeText: { color: theme.colors.tertiary }, // Assuming tertiary is a green-like color in your theme
-  expenseText: { color: theme.colors.error },
+  incomeText: {
+    color: theme.colors.success, // Using success for income
+  },
+  expenseText: {
+    color: theme.colors.error,
+  },
   netText: {
-    // fontFamily: commonStyles.FONTS.bold, // Use PaperText variant or fontWeight style
-    fontWeight: 'bold',
-    marginTop: commonStyles.SPACING.xsmall || 6, // Ensure xsmall is defined
+    // fontFamily: theme.FONTS.bold, // Handled by variant="bodyLarge" potentially, or use fontWeight
+    fontWeight: 'bold', // Keep if variant doesn't cover
+    marginTop: theme.SPACING.small,
     color: theme.colors.onSurface,
   },
   listItem: {
-    marginBottom: commonStyles.SPACING.small,
-    paddingBottom: commonStyles.SPACING.small,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.outlineVariant, // Softer border
+    marginBottom: theme.SPACING.medium,
+    paddingBottom: theme.SPACING.medium,
+    borderBottomWidth: StyleSheet.hairlineWidth, // Thinner border
+    borderBottomColor: theme.colors.outlineVariant,
   },
-  itemText: {
-    // fontFamily: commonStyles.FONTS.regular,
-    // fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.onSurfaceVariant, // Muted text on Card
+  itemTextSecondary: { // Replaces itemText
+    color: theme.colors.onSurfaceVariant,
   },
-  itemTextBold: {
-    // fontFamily: commonStyles.FONTS.medium, // Handled by variant
-    // fontSize: commonStyles.FONTS.sizes.small, // Handled by variant
-    color: theme.colors.onSurface, // Emphasized text on Card
-    marginBottom: commonStyles.SPACING.xxsmall || 4,
+  itemTextEmphasis: { // Replaces itemTextBold
+    color: theme.colors.onSurface,
+    marginBottom: theme.SPACING.xxsmall,
   },
-  text: {
-    // fontFamily: commonStyles.FONTS.regular,
-    // fontSize: commonStyles.FONTS.sizes.small,
-    color: theme.colors.onSurfaceVariant, // For placeholder texts like "No data"
+  placeholderText: { // Replaces text style for placeholders
+    color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
-    paddingVertical: commonStyles.SPACING.small,
+    paddingVertical: theme.SPACING.medium, // Increased padding
   },
-  progressBar: { // Renamed from progressBarContainer
-    height: 8, // Default height or adjust as needed
-    borderRadius: theme.roundness, // Use theme's roundness
-    marginTop: commonStyles.SPACING.xxsmall || 4,
-    marginBottom: commonStyles.SPACING.xsmall || 6,
-    backgroundColor: theme.colors.surfaceVariant, // Background for the track
+  progressBar: {
+    height: 10, // Slightly increased height
+    borderRadius: theme.BORDER_RADIUS.medium, // More rounded
+    marginTop: theme.SPACING.xsmall,
+    // marginBottom: theme.SPACING.xsmall, // Removed if not needed after listItem paddingBottom
+    backgroundColor: theme.colors.surfaceVariant,
   },
-  // progressBarFill is no longer needed as ProgressBar handles its own fill
 });
