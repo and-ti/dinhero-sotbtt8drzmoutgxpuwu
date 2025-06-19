@@ -1,17 +1,17 @@
 // app/settings.tsx
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
+  Button as PaperButton,
   Switch as PaperSwitch,
   Text as PaperText,
   useTheme,
-  Button as PaperButton, // Added for potential future use like logout
 } from 'react-native-paper';
 // Assuming useTheme from ThemeContext is compatible or we switch to Paper's useTheme
 // For consistency with other refactors, let's assume useTheme is from react-native-paper or compatible.
 // import { useTheme } from '../src/context/ThemeContext'; // If this context provides PaperThemeType
-import { PaperThemeType } from '../src/styles/theme'; // Import theme type
 import { useRouter } from 'expo-router'; // For logout navigation
+import { PaperThemeType } from '../src/styles/theme'; // Import theme type
 
 export default function SettingsScreen() {
   // Assuming toggleTheme and currentMode are correctly provided by the theme context used.

@@ -1,9 +1,9 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
   Modal,
-  ScrollView,
   ScrollView,
   StyleSheet,
   View,
@@ -11,18 +11,15 @@ import {
 import {
   Button,
   Card,
-  IconButton,
-  Modal as PaperModal, // Consider for modals if applicable, though RN Modal is fine.
+  IconButton, // Use Paper's Text
+  TextInput as PaperTextInput, // Consider for modals if applicable, though RN Modal is fine.
   ProgressBar,
-  Text, // Use Paper's Text
-  TextInput as PaperTextInput, // Use Paper's TextInput
-  useTheme,
+  Text, // Use Paper's TextInput
+  useTheme
 } from 'react-native-paper';
-import type { SQLiteDatabase } from 'expo-sqlite';
 // Assuming ThemeContext provides a theme compatible with react-native-paper
 // For this refactoring, we'll assume `theme` object from `useTheme()` is compatible.
 // import { useTheme } from '../../src/context/ThemeContext'; // Keep if this is the intended provider
-import { PaperThemeType } from '../../src/styles/theme'; // Import theme type
 import {
   addGoal,
   contributeToGoal,
@@ -34,6 +31,7 @@ import {
   updateGoal,
   updateGoalStatus,
 } from '../../src/database';
+import { PaperThemeType } from '../../src/styles/theme'; // Import theme type
 // import { commonStyles } from '../../src/styles/theme'; // To be removed
 
 export default function MetasScreen() {

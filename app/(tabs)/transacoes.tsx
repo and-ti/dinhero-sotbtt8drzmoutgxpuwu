@@ -5,20 +5,16 @@ import {
   Alert,
   FlatList,
   Modal,
-  Alert,
-  FlatList,
-  Modal,
   StyleSheet,
   View
 } from 'react-native';
 import {
   Button,
-  Card,
-  DataTable, // For tabular data if chosen, or just Card for items
-  Switch as PaperSwitch,
-  Text, // Use Paper's Text
-  TextInput as PaperTextInput, // Use Paper's TextInput
-  useTheme,
+  Card, // For tabular data if chosen, or just Card for items
+  Switch as PaperSwitch, // Use Paper's Text
+  TextInput as PaperTextInput,
+  Text, // Use Paper's TextInput
+  useTheme
 } from 'react-native-paper';
 import {
   addCategory,

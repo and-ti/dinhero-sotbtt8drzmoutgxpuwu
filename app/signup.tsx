@@ -1,18 +1,11 @@
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { type SQLiteDatabase } from 'expo-sqlite';
 import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  // Text, // Will use PaperText
-  // TextInput // Will use PaperTextInput
-  // Pressable // Will use Paper Button
+  StyleSheet
 } from 'react-native';
 import {
   Button,
